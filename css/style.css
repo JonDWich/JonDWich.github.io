@@ -34,12 +34,12 @@ a:hover {
     margin-left: 5px;
 }
 
-.cs-icon::after {
+.csharp-icon::after {
     content: '';
     display: inline-block;
     width: 24px;
     height: 24px;
-    background-image: url('../images/cs_icon.png');
+    background-image: url('../images/csharp_icon.png');
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
@@ -128,6 +128,15 @@ h1, h2, h3 {
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.about-me ul {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+}
+
+.about-me li {
+    margin-bottom: 0.5rem;
 }
 
 /* Projects Grid */
