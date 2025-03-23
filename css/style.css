@@ -65,6 +65,23 @@ nav a.active {
     background-color: #3498db;
 }
 
+.project-nav {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-btn {
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.nav-btn:hover {
+    background-color: #34495e;
+    text-decoration: none;
+}
+
 /* Main */
 main {
     max-width: 1200px;
@@ -181,7 +198,6 @@ h1, h2, h3 {
     width: 100%;
     padding: 1rem;
     text-align: left;
-    color: black;
     background-color: #f8f9fa;
     border: none;
     font-size: 1rem;
@@ -189,6 +205,7 @@ h1, h2, h3 {
     cursor: pointer;
     transition: background-color 0.3s;
     position: relative;
+    color: #333;
 }
 
 .expand-btn::after {
@@ -290,6 +307,11 @@ footer {
     .navbar {
         flex-direction: column;
         padding: 1rem;
+    }
+
+    .project-nav {
+        order: 3;
+        margin-top: 1rem;
     }
 
     .name {
