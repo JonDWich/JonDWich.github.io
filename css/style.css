@@ -27,7 +27,7 @@ a:hover {
     display: inline-block;
     width: 16px;
     height: 16px;
-    background-image: url('images/lua_icon.png');
+    background-image: url('../images/lua_icon.png');
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
