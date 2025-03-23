@@ -31,7 +31,7 @@ if (contactForm)
         const message = document.getElementById('message').value;
 
         // Alert thing
-        alert(`Thanks, ${name}! I'll get back to you.`);
+        alert(`Thanks, ${name}! I'll get back to you. Test`);
 
         contactForm.reset();
     })
