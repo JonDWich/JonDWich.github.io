@@ -1,37 +1,38 @@
-// Wait for DOM to load
+// Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Get all expand buttons
+    // Find all expand buttons
     const expandButtons = document.querySelectorAll('.expand-btn');
-
-    // Click event listener for each button
+    
+    // Add click event listener to each button
     expandButtons.forEach(button => {
         button.addEventListener('click', function() {
             // Toggle active class on the button
             this.classList.toggle('active');
-
-            // Get the content container that follows the button
+            
+            // Get the content container that follows this button
             const content = this.nextElementSibling;
-
-            // Toggle active class
+            
+            // Toggle active class on the content
             content.classList.toggle('active');
         });
     });
-
-    // Contact Form submission handling
-    const contactForm = document.querySelector('contact-form');
-    if (contactForm)
-    {
+    
+    // Form submission handling (for contact form)
+    const contactForm = document.querySelector('.contact-form');
+    if (contactForm) {
         contactForm.addEventListener('submit', function(event) {
             event.preventDefault();
-
+            
             // Get form values
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const message = document.getElementById('message').value;
-
-            // Alert thing
-            alert(`Thanks, ${name}! I'll get back to you. Test`);
-
+            
+            // In a real application, you would send this data to a server
+            // For now, we'll just show an alert
+            alert(`Thank you, ${name}! Your message has been received. I'll get back to you at ${email} soon.`);
+            
+            // Reset the form
             contactForm.reset();
         });
     }
