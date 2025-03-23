@@ -16,23 +16,23 @@ document.addEventListener('DOMContentLoaded', function() {
             content.classList.toggle('active');
         });
     });
+
+    // Contact Form submission handling
+    const contactForm = document.querySelector('contact-form');
+    if (contactForm)
+    {
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            // Alert thing
+            alert(`Thanks, ${name}! I'll get back to you. Test`);
+
+            contactForm.reset();
+        });
+    }
 });
-
-// Contact Form submission handling
-const contactForm = document.querySelector('contact-form');
-if (contactForm)
-{
-    contactForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        // Get form values
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const message = document.getElementById('message').value;
-
-        // Alert thing
-        alert(`Thanks, ${name}! I'll get back to you. Test`);
-
-        contactForm.reset();
-    })
-}
