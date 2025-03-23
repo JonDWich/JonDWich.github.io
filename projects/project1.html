@@ -1,0 +1,74 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 1 - My Portfolio</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Ribbon -->
+    <header class = "navbar">
+        <div class = "name">Jon Wich</div>
+        <nav>
+            <ul>
+                <li><a href="../index.html" class="active">Home</a></li>
+                <li><a href="../contact.html">Contact</a></li>
+            </ul>
+        </nav>
+     </header>
+
+     <!-- Main -->
+      <main>
+        <article class="project-details">
+            <h1>Project 1</h1>
+
+            <div class="project-image">
+                <img src="../images/project1.jpg" alt="Project 1">
+            </div>
+
+            <div class="project-info">
+                <div class="info-item">
+                    <span class="label">Technologies:</span>
+                    <span class="value">Lua!!</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="label">Duration:</span>
+                    <span class="value">A year lol</span>
+                </div>
+            </div>
+
+            <section class="project-description">
+                <h2>Project Overview</h2>
+                <p>Roguelike, innit?</p>
+
+                <!-- Expandable parts! -->
+                 <div class="expandable-section">
+                    <button class="expand-btn">Project Goals</button>
+                    <div class="expandable-content">
+                        <p>Goals, innit?</p>
+                        <ul>
+                            <li>Goal 1: Algorithm</li>
+                            <li>Goal 2: Pathfinding</li>
+                            <li>Goal 3: Procrastination lol</li>
+                        </ul>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Technical Challenges</button>
+                    <div class="expandable-content">
+                        <p>Sandboxing, wow</p>
+                    </div>
+                 </div>
+            </section>
+        </article>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Jonathan Wich. All rights reserved.</p>
+     </footer>
+
+     <script src="../js/script.js"></script>
+</body>
+</html>
