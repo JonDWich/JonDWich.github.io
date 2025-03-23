@@ -34,12 +34,12 @@ a:hover {
     margin-left: 5px;
 }
 
-.c#-icon::after {
+.cs-icon::after {
     content: '';
     display: inline-block;
     width: 24px;
     height: 24px;
-    background-image: url('../images/c#_icon.png');
+    background-image: url('../images/cs_icon.png');
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
