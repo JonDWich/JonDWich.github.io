@@ -25,9 +25,21 @@ a:hover {
 .lua-icon::after {
     content: '';
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
     background-image: url('../images/lua_icon.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.c#-icon::after {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('../images/c#_icon.png');
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
