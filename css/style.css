@@ -270,6 +270,20 @@ h1, h2, h3 {
     transition: max-height 0.6s ease-in, padding 0.4s ease-in;
 }
 
+.expandable-content ul {
+    padding-left: 2rem;
+    margin-top: 0.5rem;
+}
+
+.expandable-content li {
+    margin-bottom: 0.5rem;
+}
+
+.expandable-content p {
+    padding-top: 0;
+    padding-bottom: 1rem;
+}
+
 /* Contact page */
 .contact {
     background-color: white;
