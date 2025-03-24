@@ -215,6 +215,11 @@ h1, h2, h3 {
     border-radius: 4px;
 }
 
+.project-description p {
+    padding-top: 0;
+    padding-bottom: 1rem;
+}
+
 .info-item .label {
     font-weight: bold;
     columns: #555;
