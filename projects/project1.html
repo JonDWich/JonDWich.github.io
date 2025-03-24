@@ -71,8 +71,9 @@
                  <div class="expandable-section">
                     <button class="expand-btn">Technical Challenges</button>
                     <div class="expandable-content">
-                        <p>While overhauling a game's movement system isn't unheard of in this series, typically it involves extensive code injection (making the game load a DLL where you can write your own C++ code, hooking existing game functions and whatnot).</p>
-                        <p>This is possible in Sonic 06 as well, it's how we can access pointers via Lua in the first place, but creating one is a significantly more involved process and requires some software that's quite hard to come by. The method used for it also only supports loading one DLL at a time, meaning mods could run into compatibility issues if the community starts using their own DLLs in their projects.</p>
+                        <p>While overhauling a game's movement system isn't unheard of in this series, typically it involves extensive code injection (making the game load a DLL where you can write your own C++ code, hooking existing game functions and whatnot).
+                        This is possible in Sonic 06 as well, it's how we can access pointers via Lua in the first place, but creating one is a significantly more involved process and requires some software that's quite hard to come by. 
+                        The method used for it also only supports loading one DLL at a time, meaning mods could run into compatibility issues if the community starts using their own DLLs in their projects.</p>
 
                         <p>With that in mind, I decided to write this project in Lua.</p>
                         <p>The advantages to running everything through the game's Lua framework were that I sidestepped DLL compatibility concerns and gained a few other perks, such as faster prototyping (functions could be modified or added on the fly since nothing is compiled) and full compatibility with any patches or other mods that may edit character behavior through the executable.</p>
