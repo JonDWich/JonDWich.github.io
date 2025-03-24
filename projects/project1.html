@@ -46,17 +46,24 @@
 
             <section class="project-description">
                 <h2>Project Overview</h2>
-                <p>Physics, innit?</p>
-
+                <p>In a long running series of high speed, physics based platformers that let the player use the terrain to fling themselves through levels, <i>Sonic The Hedgehog (2006)</i> is notable for lacking virtually everything that enables that.</p>
+                <p>Slopes don't affect your speed, leaving the ground sends you at a fixed speed with no acceleration or deceleration, there's no momentum or inertia, characters turn on a dime without slowing down, and plenty of other staples are simply absent from this title.</p>
+                <p>For years, overhauling the controls was a pipedream, but in early 2024 the modding scene saw a breakthrough which allowed manipulating pointer data directly through the game's native Lua framework.</p>
+                
+                <p>As a showcase of this new tech, I began implementing a physics system for character movement.</p>
+                <p>Over time, this project grew to include restoring cut content, fixing broken features, and adding new ones to polish up the entire experience.</p>
+                <p>While a proper deep dive is outside the scope of this page, I've included some of the more interesting challenges below.</p>
                 <!-- Expandable parts! -->
                  <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
-                        <p>Goals, innit?</p>
+                        <p>In character movement, "physics" tends to be used somewhat loosely; mechanics are often fudged (or even excluded) to create a smoother player experience, so I had to decide what to even implement in the first place.</p>
+                        <p>After analyzing other games in the series, I settled on the following mechanics:</p>
                         <ul>
-                            <li>Goal 1: Algorithm</li>
-                            <li>Goal 2: Pathfinding</li>
-                            <li>Goal 3: Procrastination lol</li>
+                            <li>Gravitational Acceleration: Running uphill should slow you down and vice versa. This is absent in the Retail game.</li>
+                            <li>Momentum/Inertia: Speed should be preserved between actions/states. In Retail, the player typically snaps between pre-determined values.</li>
+                            <li>Slope Launches: Related to the above, when the player runs off an incline, they should receive an upward boost based on speed and angle, creating a natural launch.</li>
+                            <li>Rotation Dampening: Turning resistance should increase directly with speed, and speed should decrease during sharp turns. The former somewhat exists in Retail, but it's a static resistance and negligible.</li>
                         </ul>
                     </div>
                  </div>
@@ -64,7 +71,17 @@
                  <div class="expandable-section">
                     <button class="expand-btn">Technical Challenges</button>
                     <div class="expandable-content">
-                        <p>Sandboxing, wow</p>
+                        <p>While overhauling a game's movement system isn't unheard of in this series, typically it involves extensive code injection (making the game load a DLL where you can write your own C++ code, hooking existing game functions and whatnot).</p>
+                        <p>This is possible in Sonic 06 as well, it's how we can access pointers via Lua in the first place, but creating one is a significantly more involved process and requires some software that's quite hard to come by. The method used for it also only supports loading one DLL at a time, meaning mods could run into compatibility issues if the community starts using their own DLLs in their projects.</p>
+
+                        <p>With that in mind, I decided to write this project in Lua.</p>
+                        <p>The advantages to running everything through the game's Lua framework were that I sidestepped DLL compatibility concerns and gained a few other perks, such as faster prototyping (functions could be modified or added on the fly since nothing is compiled) and full compatibility with any patches or other mods that may edit character behavior through the executable.</p>
+                        <p>It also provided a chance to make modding the game more accessible as Lua is a very beginner friendly language. I wrote a library alongside the project, allowing one to easily modify character attributes, adjust hitboxes, and more as well as a framework for creating new character states and modifying existing ones.</p>
+                        
+                        <p>Unfortunately, using Lua meant I was completely beholden to the game's existing behavior. My mod acts like a layer sitting on top of the executable code; while it can utilize existing systems, and even implement new ones for its own use, it can't change what it's sitting on.</p>
+                        <p>For example, when you jump, the game snaps you to a set horizontal speed defined in a parameter file. This state performs that snap every frame while you remain in it, meaning if I tried to write to your horizontal speed value, my change would get ignored, and since the state is lower level than my script, I couldn't easily change the behavior.</p>
+                        <p>To fix this, I instead located where values from that parameter file were stored in memory, placed their offsets into a table, then wrote functions for getting and setting the values by name.</p>
+                        <p>From there, I could simply update the corresponding value as you run along the ground, and the game would keep you at the correct speed when you enter the air, with aerial deceleration happening by lowering the value.</p>
                     </div>
                  </div>
             </section>
