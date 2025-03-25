@@ -53,9 +53,6 @@
                     fixing broken features, and even adding new ones to polish up the entire experience.
                 </p>
                 <p>While a proper deep dive is outside the scope of this page, I've included some of the more interesting challenges below.
-                    <i>NOTE:</i> Due to the nature of this project, a good deal of reverse engineering was required to find where and how the game stores things in memory.
-                    While SEGA/Sonic Team has a very friendly relationship with modders, I won't be going into much detail about that part of the project out of respect.
-                    Much of the reverse
                 </p>
                 <!-- Expandable parts! -->
                  <div class="expandable-section">
@@ -70,6 +67,39 @@
                             <li>Rotation Dampening: Turning resistance should increase directly with speed, and speed should decrease during sharp turns. The former somewhat exists in Retail, but it's a static resistance and negligible.</li>
                         </ul>
                         <p>Additional features were added as the project continued, such as different physics when rolling and balancing mechanics for rail grinding, but the four listed above form the foundation for everything else.</p>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Reverse Engineering</button>
+                    <div class="expandable-content">
+                        <p>
+                            <i>NOTE: While SEGA/Sonic Team has a very friendly relationship with modders and projects like these, I'll be omitting a lot of information about the reverse engineering process out of respect.</i> 
+                        </p>
+
+                        <p>
+                            When it came to disassembling the game's code and reverse engineering the structure, my contributions were limited. Another member of the community (the one who set up our DLL system in the first place) generally took care of that.
+                            <br>For my part, I focused on finding specific variables and how they were used, such as documenting all the character-specific flags or hunting down parameters stored in submodules rather than on the character themselves.
+                        </p>
+
+                        <p>The process was pretty similar to poking around in cheat engine, except I used Lua and a disassembler.
+                            <br>Typically, I would use Lua to get the address of a pointer to some common structure I wanted to investigate, then I would jump to that address using a disassembler. From there, I'd look for any bytes, floats or other promising values, make note of the offsets, then retrieve them back in Lua and poke at the data until I could figure out what it handled.
+                            <br>Thankfully, the guess-and-check part wasn't always needed. Since so many character parameters and modules are set up and called from Lua, I could just search for a string using the disassembler then check its relation to the player object and see how its value was assigned.
+                        </p>
+                        <p>For example, most character attacks are set up using "weapons modules." These are loaded via Lua in the player's script, so the variables for attack damage and whatnot are written along with everything else, but internally the data is held inside the module, not on the player object.
+                            <br>Thankfully, each module has a string associated with it, and the DLL implements a function that returns a pointer to a given module using that string. Thus, if I wanted to modify the Homing Attack's damage value, the process would go like this:
+                            <ul>
+                                <li>Search the executable for the "c_homing_damage" string.</li>
+                                <li>Check which subroutines load the function (there are multiple modules that may use it, so I need to get the right one.)</li>
+                                <li>Make note of the offset used to store the variable.</li>
+                                <li>Jump out of the subroutine, back to the main module.</li>
+                                <li>Each module stores this, and other related subroutines, inside a VFTable. Make note of the offset inside the table to access the subroutine.</li>
+                            </ul>
+                            Putting it all together, in Lua that would look like this:
+                            <br><code>local homing_damage = PlayerObject:GetIPluginByName("homing"):Move(offset_base + offset_variable):GetDWORD()</code>
+                        </p>
+
+                        <p>This wasn't used terribly often for the core behavior outlined in the Project Goals, but it was used extensively when I began doing character-specific tweaks later in the project.</p>
                     </div>
                  </div>
 
