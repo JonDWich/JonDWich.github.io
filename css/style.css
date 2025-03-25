@@ -398,6 +398,21 @@ footer {
     text-decoration: none;
 }
 
+/* Code */
+pre {
+    background-color: #f4f4f4;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .navbar {

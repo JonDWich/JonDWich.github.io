@@ -4,6 +4,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Physics | Jon Wich - Portfolio</title>
     <link rel="stylesheet" href="../css/style.css">
+
+    <!-- Lua highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
 </head>
 <body>
     <!-- Ribbon -->
@@ -47,7 +52,7 @@
             <section class="project-description">
                 <h2>Project Overview</h2>
                 <p>In a long running series of high speed, physics based platformers that let the player use the terrain to fling themselves through levels, <i>Sonic The Hedgehog (2006)</i> is notable for lacking almost all of that.</p>
-                <p>Slopes don't affect your speed, leaving the ground sends you at a fixed speed with no acceleration or deceleration, there's no momentum or inertia, characters turn on a dime without slowing down, and plenty of other staples are simply absent from this title.<br>
+                <p>Slopes don't affect your speed, leaving the ground locks you to a pre-set speed, there's no momentum or inertia, characters turn on a dime without slowing down, and plenty of other staples are simply absent from this title.<br>
                     For years, overhauling the controls was a pipedream, but in early 2024 the modding scene saw a breakthrough which allowed manipulating pointer data directly through the game's native Lua framework, 
                     so as a showcase of this new tech, I began implementing a physics system for character movement, and over time the project grew to include restoring cut content,
                     fixing broken features, and even adding new ones to polish up the entire experience.
@@ -61,7 +66,7 @@
                         <p>In character movement, "physics" are somewhat loose; mechanics are often fudged (or even excluded) to create a smoother player experience, so I had to decide what to even implement in the first place.
                         After analyzing other games in the series, I settled on the following core mechanics:</p>
                         <ul>
-                            <li>Gravitational Acceleration: Running uphill should slow you down and vice versa. This should also apply if you jump off a slope, increasing or decreasing your jump height respectively. This is absent in the Retail game.</li>
+                            <li>"Slope Physics": Running uphill should slow you down and vice versa. This should also apply if you jump off a slope, increasing or decreasing your jump height respectively. This is absent in the Retail game.</li>
                             <li>Momentum/Inertia: Speed should be preserved between actions/states. In Retail, the player typically snaps between pre-determined values.</li>
                             <li>Slope Launches: Related to the above, when the player runs off an incline, they should receive an upward/downward boost based on speed and angle, creating a natural launch.</li>
                             <li>Rotation Dampening: Turning resistance should increase directly with speed, and speed should decrease during sharp turns. The former somewhat exists in Retail, but it's a static resistance and negligible.</li>
@@ -90,16 +95,22 @@
                             <br>Thankfully, each module has a string associated with it, and the DLL implements a function that returns a pointer to a given module using that string. Thus, if I wanted to modify the Homing Attack's damage value, the process would go like this:
                             <ul>
                                 <li>Search the executable for the "c_homing_damage" string.</li>
-                                <li>Check which subroutines load the function (there are multiple modules that may use it, so I need to get the right one.)</li>
+                                <li>Check which subroutines load the string (the same string can be used in multiple modules, so I need to get the right one.)</li>
                                 <li>Make note of the offset used to store the variable.</li>
                                 <li>Jump out of the subroutine, back to the main module.</li>
                                 <li>Each module stores this, and other related subroutines, inside a VFTable. Make note of the offset inside the table to access the subroutine.</li>
                             </ul>
                             Putting it all together, in Lua that would look like this:
-                            <br><code>local homing_damage = PlayerObject:GetIPluginByName("homing"):Move(offset_base + offset_variable):GetDWORD()</code>
                         </p>
-
-                        <p>This wasn't used terribly often for the core behavior outlined in the Project Goals, but it was used extensively when I began doing character-specific tweaks later in the project.</p>
+                        <pre><code class="language-lua">
+                            -- Examples, not the actual offsets
+                            local vft_offset = 0x2C
+                            local variable_offset = 0xF3
+                            local homing_damage = PlayerObject:GetIPluginByName("homing"):Move(vft_offset + variable_offset):GetDWORD()
+                        </code></pre>
+                        <p>(In the actual project I properly stored this information in a table then wrote a function to easily get/set data from any module.)
+                            <br>This wasn't used terribly often for the core behavior outlined in the Project Goals, but it was used extensively when I began doing character-specific tweaks later in the project.
+                        </p>
                     </div>
                  </div>
 
@@ -119,7 +130,67 @@
                         <p>To fix this, I instead located where values from that parameter file were stored in memory, placed their offsets into a table, then wrote functions for getting and setting the values by name. 
                             From there, I could simply update the corresponding value as you run along the ground, and the game would keep you at the correct speed when you enter the air, with aerial deceleration happening by lowering the value.
                         </p>
-                        <img src="../images/physics_images/physics_airdecel.png" alt="Air Deceleration code example">
+                        <!-- <img src="../images/physics_images/physics_airdecel.png" alt="Air Deceleration code example"> -->
+
+                        <pre><code class="language-lua">
+                            function ManageAirDeceleration(state_check)
+                                local max_jump = player_reference.base_jump_speed -- Amount of vertical speed normally applied while jumping.
+                                
+                                -- Handles regulating air speed during or after certain gimmicks
+                                if (state_check == StateID.SPRING or state_check == StateID.ROPE) and GetInputLockout() == 0 and GetPlayerSpeed("x", true) == 0 then
+                                    SetPlayerLuaValue("c_jump_run", 900)
+                                    SetPlayerLuaValue("c_jump_walk", 150)
+                                    SetPlayerLuaValue("c_jump_speed", player_reference.base_jump_speed)
+                                elseif CheckAirBlacklist(state_check) then
+                                    SetPlayerLuaValue("c_jump_run", 900) -- Max horizontal air speed from a non-stationary jump
+                                    SetPlayerLuaValue("c_jump_walk", 150) -- Max horizontal air speed from a stationary jump
+                                    SetPlayerLuaValue("c_jump_speed", player_reference.base_jump_speed) -- Vertical boost
+                                    return
+                                end
+                                -- A "pushback" can be replicated (at least when walking) by removing the < 0 check and taking the abs of GetPlayerSpeed("total")
+                                local total = GetPlayerSpeed("total")
+                                jump_run_current = total
+                                if GetPlayerSpeed("x", true) < 0 then
+                                    SetPlayerSpeed("x", 0, true)
+                                end
+                                if IsStickNeutral() then -- Quickly drop to 0 if you release the left stick
+                                    jump_run_current = lerp(jump_run_current, 0, 2.5/60)
+                                elseif jump_run_current > player_reference.slope_params.base_jump_run then -- If above regular jump speed, decelerate to it.
+                                    jump_run_current = lerp(jump_run_current, player_reference.slope_params.base_jump_run, 1.1/60)
+                                elseif jump_run_current < player_reference.slope_params.base_jump_run then -- If below regular jump speed, accelerate to it.
+                                    jump_run_current = lerp(jump_run_current, player_reference.slope_params.base_jump_run, 1.5/60) -- 2
+                                end
+                                local jump_vert = GetPlayerLuaValue("c_jump_speed") -- Vertical speed during a jump
+                                if jump_vert > max_jump then
+                                    jump_vert = lerp(jump_vert, max_jump, 0.75/60)
+                                end
+                                local shrink_on = GetPlayerName() == "sonic" and GetContextFlag("IsShrink") or nil
+                                if shrink_on then
+                                    local gem_spd = total - (total * PlayerList.sonic.sonic_gem_params.purple.air_drag_rate)/60
+                                    if state_check == StateID.GEM_PURPLE then
+                                    SetPlayerSpeed("x", gem_spd, false)
+                                    SetPlayerLuaValue("c_jump_run", jump_run_current)
+                                    SetPlayerLuaValue("c_jump_walk", jump_run_current)
+                                    else
+                                    if jump_run_current > gem_spd - 0.1 then gem_spd = jump_run_current end -- This prevents decelerating towards 0 when airborne and shrunk
+                                    SetPlayerLuaValue("c_jump_run", gem_spd - 0.1)
+                                    SetPlayerLuaValue("c_jump_walk", gem_spd - 0.1)
+                                    end
+                                else
+                                    if state_check == StateID.GEM_PURPLE and GetPlayerName() == "sonic" then -- Rouge also uses this state, weirdly, so we need to check.
+                                    SetPlayerSpeed("x", jump_run_current, false)
+                                    end
+                                    SetPlayerLuaValue("c_jump_run", jump_run_current)
+                                    SetPlayerLuaValue("c_jump_walk", jump_run_current)
+                                end
+                                SetPlayerLuaValue("c_jump_speed", jump_vert)
+                                if state_check == StateID.JUMP and GetInput("a", "hold") then
+                                    SetPlayerSpeed("y", jump_vert, false) -- This causes water bounce, maybe remove?
+                                end
+                                
+                                SetPlayerLuaValue("c_run_speed_max", mMax(jump_run_current, player_max_run)) -- Carries air speed into the ground when landing
+                            end
+                        </code></pre>
                     </div>
                  </div>
 
@@ -127,8 +198,24 @@
                     <button class="expand-btn">Implementation Challenges</button>
                     <div class="expandable-content">
                         <p>While the game's inherent quirks caused the most issues, there was also the problem of simply attaining the data I needed to make this work. 
-                            Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided by the game, so they all have to be implemented by hand, a process which typically involved reverse engineering 
+                            <br>Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided by the game, so they all have to be implemented by hand.
+                            <br>While a few things were just a matter of reverse engineering (such as ground checks - there's a bitfield that stores ground/air flags), I often had to thoroughly research the math behind these functions so I could implement them myself, or come up with alternative solutions using the data I already had.
                         </p>
+
+                        <p>For instance, the first feature I worked on was gravitational acceleration. At the time, I could read/write to the player's speed (forward/upward velocity, to be precise), I could check their global coordinates, and I could detect if they were grounded, but I couldn't get any other information about the surface they were on.
+                            <br>Detecting slopes was easy enough, I could just check the change in the player's Y coordinate while they were grounded, but getting the exact angle of incline was another matter.
+                            <br>I had a vague understanding that this was typically done with fancy calculations involving the ground normal, but this was long before I could get the vector for that, let alone do the math. 
+                            <br>Rather, I realized I could approximate an angle by normalizing the velocity of the Y coordinate with the player's forward velocity then scaling by 90 (the maximum angle the player may encounter outside of scripted sections.)
+                            <br>The solution wasn't perfect (the reported angle would change if they ran diagonally on an incline, for example), but it was consistent enough to let me implement the mechanic in a way that felt natural.
+                        </p>
+                        <video
+                            width="640"
+                            height="=360"
+                            controls
+                            preload="none"
+                            poster="">
+                            <source src = "../webms/flc_slope.webm" type = "video/webm">
+                        </video>
                     </div>
                  </div>
             </section>
