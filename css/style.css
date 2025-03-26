@@ -461,6 +461,7 @@ code {
     --border-color: #2c2c2c;       /* Dark border for subtle definition */
     --shadow-color: rgba(0,0,0,0.3); /* Soft shadow for depth */
     --nav-footer-bg: #0c0c0c;
+    --project-info-bg: #2a2a2a;
 }
 
 body {
@@ -481,13 +482,19 @@ body {
 }
 
 .dark-mode .project-info {
-    background-color: var(--card-bg);
+    background-color: var(--project-info-bg);
     border: 1px solid var(--border-color);
 }
 
 /* Navigation and Interactive Elements */
 .dark-mode .navbar, .dark-mode footer {
     background-color: var(--nav-footer-bg);
+}
+
+.dark-mode .contact-item {
+    background-color: var(--project-info-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 nav a:hover, .nav-btn:hover, .footer-nav-btn:hover {
