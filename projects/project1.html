@@ -101,13 +101,13 @@
                         </p>
                         <p>For example, most character attacks are set up using "weapons modules." These are loaded via Lua in the player's script, so the variables for attack damage and whatnot are written along with everything else, but internally the data is held inside the module, not on the player object.
                             <br>Luckily, each module has a string associated with it, and the DLL implements a function that returns a pointer to a given module using that string. Thus, if I wanted to modify the Homing Attack's damage value, the process would go like this:
-                            <ul>
+                            <ol>
                                 <li>Search the executable for the "c_homing_damage" string.</li>
                                 <li>Check which subroutines load the string (the same string can be used in multiple modules, so I need to get the right one.)</li>
                                 <li>Make note of the offset used to store the variable.</li>
                                 <li>Jump out of the subroutine, back to the main module.</li>
                                 <li>Each module stores this, and other related subroutines, inside a VFTable. Make note of the offset inside the table to access the subroutine.</li>
-                            </ul>
+                            </ol>
                             Putting it all together, in Lua that would look like this:
                         </p>
                         <pre><code class="language-lua">
