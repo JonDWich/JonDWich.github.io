@@ -163,6 +163,19 @@
                             poster="../images/physics_images/flc_poster.png">
                             <source src = "../webms/flc_slope.webm" type = "video/webm">
                         </video>
+
+                        <p>Alternatively, consider this sequence. 06 contains an unused upgrade item that was meant to transform Sonic into Super Sonic. The item does have a unique state attached, but the sequence is incredibly unfinished, doing little more than playing an animation. I wanted to fix that.
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/super_poster.png">
+                            <source src = "../webms/super_transform.webm" type = "video/webm">
+                        </video>
+                        <p>This two second sequence required writing a scheduler, manually handling camera movement, creating custom particles, and more, but I want to highlight the spinning emeralds.
+                            <br>Sonic 06 does not readily provide a way to parent objects, so any local transformations are a pain. Fortunately, we can spawn in game objects directly via Lua at any given coordinates, and simple havok based objects can be created by just editing a .bin file. With that in mind, I figured I could create a "chaos emerald" object with a lifetime of one frame then make it "move" around the player by spawning a new one each frame, slightly offset from the last position.  
+                            <br>From there, I set up a function that would generate a circle around the player using their current position - with a given radius and number of points - and wrote another function to generate an arbitrary number of sub-points between two coordinates via linear interpolation. After that, I could simply generate an initial circle when the Super Transformation process begins, smooth it out by interpolating between the points (storing each set of coordinates as a vector), then storing all the position vectors in an array, spawning the emeralds evenly spaced out, then quickly updating their position frame by frame.  
+                        </p>
                     </div>
                  </div>
 
@@ -225,7 +238,7 @@
                                 <li>Write a Lua State (L_State). This consists of StateEnter, Update and StateExit functions. All states inherit from a base state, so these functions can be omitted as needed.</li>
                                 <li>Pair a Lua State (L_State) to a C_State as a "root state."</li>
                                 <li>When the player enters a paired C_State, begin running the corresponding L_State. When the player exits that C_State, automatically exit the L_State, returning to an Init state.</li>
-                                <li>As a caveat to the above, L_States can have animations associated with them. If the player leaves the root state but is in an associated animation, they'll stay in the L_State.</li>
+                                <li>As a caveat to the above, the automatic entrance is optional, and L_States can have animations associated with them. If the player leaves the root state but is in an associated animation, they'll stay in the L_State.</li>
                                 <li>A Manager function handles the automatic entrances and exits, but this can also be invoked manually through Lua, allowing you to pair multiple L_States to the same C_State.</li>
                             </ul>
                             The L_States themselves are handled as objects stored inside a table I created to house custom parameters (for physics and whatnot) for each character. States have a reference to that character, and multiple L_States can be grouped within a class, allowing easy reference to the other grouped states.
@@ -302,7 +315,7 @@
                             poster="../images/physics_images/abilities_poster.png">
                             <source src = "../webms/abilities.webm" type = "video/webm">
                         </video>
-                        <p>Those are just a few of the new abilities added through this state machine, but the biggest accomplishment was creating a "new" character.</p>
+                        <p>As nice as those additions were, the biggest accomplishment was creating a "new" character.</p>
                     </div>
                  </div>
             </section>
