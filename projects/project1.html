@@ -34,7 +34,7 @@
             <h1>Physics Overhaul</h1>
 
             <div class="project-image">
-                <img src="../images/project1.jpg" alt="WebM Will Go Here">
+                <img src="../images/physics_images/bounce_poster.png" alt="WebM Will Go Here">
             </div>
 
             <div class="project-info">
@@ -203,11 +203,11 @@
                                 <li>On a grid, a curve happens when both axes are changing at different, non-zero, rates.</li>
                                 <li>Thus, while grinding, you will always be primarily traveling along the X or Z axis, with the other axis determining the direction of the curve.</li>
                             </ul>
-                            I could find the primary axis by comparing the velocities of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
+                            I could find the primary axis by comparing the deltas of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
                         </p>
                         <!-- <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid"> -->
                         <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
-                            <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your velocities could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
+                            <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your deltas could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
                             <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
                         </p>
                         <video
@@ -339,6 +339,12 @@
                         </p>
                         <p>Enter bitflags. By reserving one index as a bitfield for Physics, I could store up to 32 unique boolean values, capable of communicating with any environment. And with that, the Badnik Bounce was ready to go.
                         </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/bounce_poster.png">
+                            <source src = "../webms/wvo_bounce.webm" type = "video/webm">
+                        </video>
                     </div>
                  </div>
             </section>
