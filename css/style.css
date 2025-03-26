@@ -480,7 +480,7 @@ body {
 }
 
 /* Navigation and Interactive Elements */
-.navbar, footer {
+.dark-mode .navbar, .dark-mode footer {
     background-color: var(--nav-footer-bg);
 }
 
