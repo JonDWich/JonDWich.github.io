@@ -454,10 +454,10 @@ code {
 }
 
 .dark-mode {
-    --bg-color: #1e1e1e;
+    --bg-color: #2c2c2c;
     --text-color: #f5f5f5;
-    --card-bg: #a9c4ee;
-    --button-bg: #394379;
+    --card-bg: #1e1e1e;
+    --button-bg: #2c2c2c;
 }
 
 #dark-mode-toggle {
