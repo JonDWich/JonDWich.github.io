@@ -170,15 +170,15 @@
                     <button class="expand-btn">Calculating Curves</button>
                     <div class="expandable-content">
                         <p>Like most 3D Sonic games, 06 has a gimmick called Rail Grinding where the player attaches to a spline and gets carried along by physics. Typically, the player can tilt the control stick to balance themselves on the rail, gaining speed by leaning into turns or flailing around if they mess up.
-                            <br>Of course, with 06 lacking physics, this was stripped down to automatically moving the player forward at a fixed speed. The player can rhythmically tap a button to speed up, but that mechanic is never explained, leaving rails as a rather uninteresting mechanic. Sonic two unused animations for leaning left and right, suggesting the developers wanted to include more traditional behavior at one point, so I took a crack at restoring it.
+                            <br>Of course, with 06 lacking physics, this was stripped down to moving the player forward at a fixed speed, leaving rails as a rather uninteresting mechanic.
                         </p>
-                        <p>While interactive rail mechanics are usually well received in the series, the actual implementation has been hit-or-miss, so I decided to simplify things a little.
+                        <p>While interactive rail mechanics are usually well received in the series, the actual implementation has been hit-or-miss, so I decided to simplify things.
                             <ul>
-                                <li>The player has 3 balance states: Balanced, Unbalanced, and Flailing.</li>
+                                <li>The player has 3 balance conditions: Balanced, Unbalanced, and Flailing.</li>
                                 <li>Correctly balancing (no lean on straightaways, or leaning into curves) increases your speed. Small mistakes (no lean on a curve, leaning on a straightaway) make you Unbalanced and gradually reduce speed. Major mistakes (incorrect lean) quickly reduce speed.</li>
                                 <li>The player can crouch (and lean while crouching), increasing the effect of physics and balance.</li>
                             </ul>
-                            With how context dependent this would be, I decided to write a state machine to help handle it all. But before I could start on that, I had a much more fundamental issue:
+                            But before I could start on any of that, I had a fundamental issue:
                             <br>Detecting curves on a spline.
                         </p>
                         <p>Usually, one would be able to read information about a spline as the player moves along it, but once again, I didn't have that option. 
@@ -192,7 +192,7 @@
                             </ul>
                             I could find the primary axis by comparing the velocities of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
                         </p>
-                        <!-- <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid"> -->
+                        <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid">
                         <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
                             <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your velocities could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
                             <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
@@ -213,6 +213,96 @@
                             poster="../images/physics_images/rails_poster_upd.png">
                             <source src = "../webms/kdv_rails_updated.webm" type = "video/webm">
                         </video>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Adding New States</button>
+                    <div class="expandable-content">
+                        <p>While planning the new balancing mechanics, I realized the project would be much easier if I could somehow extend the behavior of existing states. I was still unable to change the underlying state code, but if I could write a state machine in Lua that ran in tandem with the game's character controller, organizing and implementing mechanics like this would become significantly easier.
+                            <br>Thankfully, I could already detect the player's current state (C_State), so I set up my Lua state machine to work like this:
+                            <ul>
+                                <li>Write a Lua State (L_State). This consists of StateEnter, Update and StateExit functions. All states inherit from a base state, so these functions can be omitted as needed.</li>
+                                <li>Pair a Lua State (L_State) to a C_State as a "root state."</li>
+                                <li>When the player enters a paired C_State, begin running the corresponding L_State. When the player exits that C_State, automatically exit the L_State, returning to an Init state.</li>
+                                <li>As a caveat to the above, L_States can have animations associated with them. If the player leaves the root state but is in an associated animation, they'll stay in the L_State.</li>
+                                <li>A Manager function handles the automatic entrances and exits, but this can also be invoked manually through Lua, allowing you to pair multiple L_States to the same C_State.</li>
+                            </ul>
+                            The L_States themselves are handled as objects stored inside a table I created to house custom parameters (for physics and whatnot) for each character. States have a reference to that character, and multiple L_States can be grouped within a class, allowing easy reference to the other grouped states.
+                            <br>(This also lets a Class Exit function be assigned that only runs when you leave the class, and you'll stay within the class as long as you're in any associated animation.)
+                        </p>
+                        <p>With this, even though I couldn't disable any existing state transitions or behavior, I could still radically extend what each state could do.
+                            <br>In the case of rail grinding, I opted for 3 L_States (grinding, crouching, and tricking - to accommodate the game's one rail mechanic), grouped within the "Grind" class and rooted to C_State 12 (grinding). In Lua, the declaration looked something like this:
+                        </p>
+                        <pre><code class="language-lua">
+                            PlayerList = {
+                                sonic = {
+                                    -- Pair a handle to a cue in the character animation sheet.
+                                    state_anims = {
+                                        Grinding = {
+                                            lean_L = "overdrive_l",
+                                            lean_R = "overdrive"
+                                        },
+                                        Grinding_Crouch = {
+                                            crouch = "teleport_dash_l",
+                                            lean_L = "esp_one_l",
+                                            lean_R = "esp_one_r"
+                                        }
+                                    }
+                                },
+                                classes = {
+                                    Grind = { anims = {}, ExitFunc = ResetRailParams, root_state = StateID.GRIND }
+                                },
+                                -- Populated by RegisterState
+                                states = {},
+                                current_state = "Init",
+                                current_class = "None",
+                                state_id_list = {
+                                    [StateID.GRIND] = "Grinding"
+                                }
+                            }
+
+                            -- Creat and register the "Grinding" state to the "Grind" class on the sonic object.
+                            RegisterState(PlayerList.sonic, "Grinding", "Grind")
+
+                            RegisterState(PlayerList.sonic, "Grinding_Crouch", "Grind")
+
+                            function PlayerList.sonic.states.Grinding:StateEnter()
+                              self.player.current_state = self.name
+                              self.player.current_class = self.class
+                            end
+
+                            function PlayerList.sonic.states.Grinding:StateMain()
+                              -- Update function, example code
+                              if Current_Stick_Angle_X > 0.1 then
+                                my_rail_lean = "right"
+                                ChangePlayerAnim(self.anim_reference.lean_R)
+                              end
+                              if GetInput("rt", "hold") then
+                                return self:SwitchState("Grinding_Crouch")
+                              end
+                            end
+
+                            -- Exit function omittted
+                        </code></pre>
+                        <p>Then, putting everything together...</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/rails_poster_final.png">
+                            <source src = "../webms/kdv_rails_last.webm" type = "video/webm">
+                        </video>
+                        <p>This was a strong initial showing, but the true power of this system lies in it being done through Lua. Because none of the C_State code is modified, multiple L_States can be registered to the same root state, each with wildly different behavior.
+                            <br>While documenting the C_State list, I found an unused dummy state called "Invincible." This state has almost no behavior; it has no transitions, preserves whatever speed you entered it with, locks player rotation and makes you invulnerable. While rather pointless on its own, this was the perfect candidate for my state system. I could already handle speed, input detection and changing C_States through Lua, and restoring rotation just required flipping a byte on character context, so this left me with a blank template to manipulate however I wanted.
+                            Using Invincible as a root, I added new common abilities, such as Rolling, and new attacks to flesh out character movesets (like a grounded tail-swipe for Tails, or an aerial dive for Rouge).
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/abilities_poster.png">
+                            <source src = "../webms/abilities.webm" type = "video/webm">
+                        </video>
+                        <p>Those are just a few of the new abilities added through this state machine, but the biggest accomplishment was creating a "new" character.</p>
                     </div>
                  </div>
             </section>
