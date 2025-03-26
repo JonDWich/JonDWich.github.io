@@ -265,7 +265,8 @@ h1, h2, h3 {
 .expandable-content {
     padding: 0 1rem;
     max-height: 0;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
     transition: max-height 0.4s ease-out, padding 0.4s ease-out;
 }
 
@@ -301,11 +302,12 @@ h1, h2, h3 {
 .expandable-content video {
     display: block;
     margin: 2rem auto;
-    width: 640;
-    height: 360;
+    width: 640px;
+    height: auto;
     max-width: 100%;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: visible;
 
 }
 
