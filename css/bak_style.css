@@ -233,7 +233,7 @@ h1, h2, h3 {
 
 .info-item .label {
     font-weight: bold;
-    color: #555;
+    columns: #555;
 }
 
 /* Expandable bits */
@@ -322,6 +322,7 @@ h1, h2, h3 {
     max-width: 100%;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
 }
 
 /* Contact page */
@@ -431,6 +432,9 @@ pre {
     background-color: #f4f4f4;
     border-radius: 4px;
     padding: 1rem;
+    /* margin: 1rem 0; */
+    /* max-width: 100%; */
+    /* overflow-x: auto; */
     max-height: 400px;
     overflow-y: auto;
 }
@@ -450,101 +454,47 @@ code {
 }
 
 .dark-mode {
-    /* Softer, more natural dark mode colors */
-    --bg-color: #121212;          /* Deep charcoal base */
-    --text-color: #e0e0e0;        /* Soft light gray for text */
-    --card-bg: #1e1e1e;            /* Slightly lighter than background */
-    --accent-color: #4a6cf7;       /* Soft, muted blue for accents */
-    --accent-hover: #6684ff;       /* Slightly brighter accent for hover states */
-    --h-color: #a1c4ff;            /* Soft pastel blue for headings */
-    --border-color: #2c2c2c;       /* Dark border for subtle definition */
-    --shadow-color: rgba(0,0,0,0.3); /* Soft shadow for depth */
-    --nav-footer-bg: #0c0c0c;
+    --bg-color: #1e1e1e;
+    --text-color: #f5f5f5;
+    --card-bg: #2c2c2c;
+    --button-bg: #2c2c2c;
+    --h-color: #b2d7f5;
+}
+
+#dark-mode-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#dark-mode-toggle:hover {
+    background-color: #34495e;
+}
+
+.dark-mode #dark-mode-toggle {
+    color: yellow;
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
 }
 
-/* Project and Section Backgrounds */
-.project-details, 
-.about-me, 
-.project-card, 
-.contact, 
-.project-info {
+.project-details, .about-me, .project-card, .contact, .project-info {
     background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-color);
 }
 
-/* Navigation and Interactive Elements */
-.navbar, footer {
-    background-color: var(--nav-footer-bg);
-}
-
-nav a:hover, .nav-btn:hover, .footer-nav-btn:hover {
-    background-color: var(--accent-color);
-    color: white;
-}
-
-nav a.active {
-    background-color: var(--accent-color);
-}
-
-/* Headings */
 h1, h2, h3 {
     color: var(--h-color);
 }
 
-/* Buttons and Interactive Elements */
-button, .expand-btn {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    transition: background-color 0.3s;
-}
-
-button:hover, .expand-btn:hover {
-    background-color: var(--accent-hover);
-}
-
-/* Code Blocks */
-pre {
-    background-color: #1a1a1a;
-    border: 1px solid var(--border-color);
-}
-
-/* Dark Mode Toggle */
-#dark-mode-toggle {
-    background-color: transparent;
-    color: #a1c4ff;
-    border: 1px solid var(--accent-color);
-}
-
-#dark-mode-toggle:hover {
-    background-color: var(--accent-color);
-    color: white;
-}
-
-/* Links */
-a {
-    color: var(--accent-color);
-    transition: color 0.3s;
-}
-
-a:hover {
-    color: var(--accent-hover);
-}
-
-/* Expandable Sections */
-.expandable-section {
-    border-color: var(--border-color);
-}
-
 .expand-btn {
-    background-color: var(--card-bg);
+    background-color: var(--button-bg);
     color: var(--h-color);
 }
 
