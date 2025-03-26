@@ -143,28 +143,6 @@
                     </div>
                  </div>
 
-                 <div class="expandable-section">
-                    <button class="expand-btn">Implementation Challenges</button>
-                    <div class="expandable-content">
-                        <p>While the game's inherent quirks caused the most issues, there was also the matter of simply attaining the data I needed to make this work. 
-                            <br>Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided (unlike Unity or similar engines), so they all have to be implemented by hand.
-                            <br>A few things were just a matter of reverse engineering (such as ground checks - there's a bitfield that stores ground/air flags), but I often had to thoroughly research the math behind functions so I could implement them myself, or come up with alternative solutions using the data I already had.
-                        </p>
-
-                        <p>For instance, the first feature I worked on were the slope physics. At the time, I could read/write to the player's speed (forward/upward velocity, to be precise), I could check their global coordinates, and I could detect if they were grounded, but I couldn't get any other information about the surface they were on. Detecting slopes was easy enough 
-                            - I could just check the change in the player's Y coordinate while they were grounded - but getting the exact angle of incline was another matter.
-                            <br>I had a vague understanding that this was typically done with fancy calculations involving the ground normal, but this was long before I could get the vector for that, let alone do the math. 
-                        </p>
-
-                        <p>Instead, I realized I could approximate an angle by normalizing the velocity of the Y coordinate with the player's forward velocity then scaling by 90 (the maximum angle the player may encounter outside of scripted sections.) The solution wasn't perfect (the reported angle would change if they ran diagonally on an incline, for example, and I chose to normalize against max velocity instead of current velocity), but it was consistent enough to let me implement the mechanic in a way that felt natural.</p>
-                        <video
-                            controls
-                            preload="none"
-                            poster="../images/physics_images/flc_poster.png">
-                            <source src = "../webms/flc_slope.webm" type = "video/webm">
-                        </video>
-                    </div>
-                 </div>
 
                  <div class="expandable-section">
                     <button class="expand-btn">Calculating Curves</button>
@@ -215,6 +193,31 @@
                         </video>
                     </div>
                  </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Implementation Challenges</button>
+                    <div class="expandable-content">
+                        <p>While the game's inherent quirks caused the most issues, there was also the matter of simply attaining the data I needed to make this work. 
+                            <br>Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided (unlike Unity or similar engines), so they all have to be implemented by hand.
+                            <br>A few things were just a matter of reverse engineering (such as ground checks - there's a bitfield that stores ground/air flags), but I often had to thoroughly research the math behind functions so I could implement them myself, or come up with alternative solutions using the data I already had.
+                        </p>
+
+                        <p>For instance, the first feature I worked on were the slope physics. At the time, I could read/write to the player's speed (forward/upward velocity, to be precise), I could check their global coordinates, and I could detect if they were grounded, but I couldn't get any other information about the surface they were on. Detecting slopes was easy enough 
+                            - I could just check the change in the player's Y coordinate while they were grounded - but getting the exact angle of incline was another matter.
+                            <br>I had a vague understanding that this was typically done with fancy calculations involving the ground normal, but this was long before I could get the vector for that, let alone do the math. 
+                        </p>
+
+                        <p>Instead, I realized I could approximate an angle by normalizing the velocity of the Y coordinate with the player's forward velocity then scaling by 90 (the maximum angle the player may encounter outside of scripted sections.) The solution wasn't perfect (the reported angle would change if they ran diagonally on an incline, for example, and I chose to normalize against max velocity instead of current velocity), but it was consistent enough to let me implement the mechanic in a way that felt natural.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/flc_poster.png">
+                            <source src = "../webms/flc_slope.webm" type = "video/webm">
+                        </video>
+                    </div>
+                 </div>
+
+                 
             </section>
         </article>
       </main>
