@@ -474,10 +474,15 @@ body {
 .about-me, 
 .project-card, 
 .contact, 
-.dark-mode.project-info {
+.project-info {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.dark-mode .project-info {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
 }
 
 /* Navigation and Interactive Elements */
