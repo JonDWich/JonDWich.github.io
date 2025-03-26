@@ -92,7 +92,7 @@
                             <br>Thankfully, the guess-and-check part wasn't always needed. Since so many character parameters and modules are set up and called from Lua, I could just search for a string using the disassembler then check its relation to the player object and see how its value was assigned.
                         </p>
                         <p>For example, most character attacks are set up using "weapons modules." These are loaded via Lua in the player's script, so the variables for attack damage and whatnot are written along with everything else, but internally the data is held inside the module, not on the player object.
-                            <br>Thankfully, each module has a string associated with it, and the DLL implements a function that returns a pointer to a given module using that string. Thus, if I wanted to modify the Homing Attack's damage value, the process would go like this:
+                            <br>Luckily, each module has a string associated with it, and the DLL implements a function that returns a pointer to a given module using that string. Thus, if I wanted to modify the Homing Attack's damage value, the process would go like this:
                             <ul>
                                 <li>Search the executable for the "c_homing_damage" string.</li>
                                 <li>Check which subroutines load the string (the same string can be used in multiple modules, so I need to get the right one.)</li>
@@ -117,101 +117,101 @@
                  <div class="expandable-section">
                     <button class="expand-btn">Technical Challenges</button>
                     <div class="expandable-content">
-                        <p>Typically, an overhaul like this would involve extensive code injection (making the game load a DLL where you can write your own C++ code, hooking existing game functions and whatnot). <br>
-                        This is possible in Sonic 06, it's how we can access pointers via Lua in the first place, but creating one is a rather involved process and requires some software that's quite hard to come by. 
-                        The method used for it also only supports loading one DLL at a time, meaning mods could run into compatibility issues if the community starts using their own DLLs in their projects.</p>
+                        <p>I faced two major issues when implementing this mod: compatibility and the game itself.
+                            <br>Usually, an overhaul like this would involve extensive code injection (making the game load a DLL where you can write your own C++ code, hooking existing game functions and whatnot). <br>
+                            This is possible in Sonic 06, it's how we can access pointers via Lua in the first place, but creating one is a rather involved process and requires some software that's quite hard to come by. 
+                            The method used for it also only supports loading one DLL at a time, meaning mods could run into conflicts if the community starts using their own DLLs in their projects.
+                        </p>
 
                         <p>With that in mind, I decided to write this project in Lua.</p>
                         <p>The advantages to running everything through the game's Lua were that I sidestepped DLL compatibility concerns and gained a few other perks, such as faster prototyping (functions could be modified or added on the fly since nothing is compiled) and full compatibility with any patches or other mods that may edit character behavior through the executable. 
-                            It also provided a chance to make modding the game more accessible as Lua is a very beginner friendly language. I wrote a library alongside the project, allowing one to easily modify character attributes, adjust hitboxes, and more as well as a framework for creating new character states and modifying existing ones.</p>
+                            It also provided a chance to make modding the game more accessible as Lua is a very beginner friendly language. I wrote a library alongside the project, allowing one to easily modify character attributes, adjust hitboxes, and more as well as a framework for creating new character states and modifying existing ones.
+                            <br>I also implemented a manager script that would load any custom files when given a filepath; this way, a mod only needs to include a 1 line change to a single existing file (to load the manager in the first place), keeping conflicts as a minimum.
+                        </p>
                         
                         <p>Unfortunately, using Lua meant I was completely beholden to the game's existing behavior. My mod acts like a layer sitting on top of the code in the executable; while it can utilize existing systems, and even implement new ones for its own use, it can't change what it's sitting on. 
                             For example, when you jump, the game snaps you to a set horizontal speed defined in a parameter file. This state performs that snap every frame while you remain in it, meaning if I tried to write to your horizontal speed value, my change would get ignored, and since the state is lower level than my script, I couldn't easily change the behavior.</p>
-                        <p>To fix this, I instead located where values from that parameter file were stored in memory, placed their offsets into a table, then wrote functions for getting and setting the values by name. 
-                            From there, I could simply update the corresponding value as you run along the ground, and the game would keep you at the correct speed when you enter the air, with aerial deceleration happening by lowering the value.
+                        <p>To fix this, I found where that value was stored then wrote some code to update it directly as the player ran along the ground, that way you'd keep the correct speed when entering the air. 
+                            <br>From there, acceleration/deceleration was as simple as smoothly lerping the value.
                         </p>
-                        <!-- <img src="../images/physics_images/physics_airdecel.png" alt="Air Deceleration code example"> -->
-
-                        <pre><code class="language-lua">
-                            function ManageAirDeceleration(state_check)
-                                local max_jump = player_reference.base_jump_speed -- Amount of vertical speed normally applied while jumping.
-                                
-                                -- Handles regulating air speed during or after certain gimmicks
-                                if (state_check == StateID.SPRING or state_check == StateID.ROPE) and GetInputLockout() == 0 and GetPlayerSpeed("x", true) == 0 then
-                                    SetPlayerLuaValue("c_jump_run", 900)
-                                    SetPlayerLuaValue("c_jump_walk", 150)
-                                    SetPlayerLuaValue("c_jump_speed", player_reference.base_jump_speed)
-                                elseif CheckAirBlacklist(state_check) then
-                                    SetPlayerLuaValue("c_jump_run", 900) -- Max horizontal air speed from a non-stationary jump
-                                    SetPlayerLuaValue("c_jump_walk", 150) -- Max horizontal air speed from a stationary jump
-                                    SetPlayerLuaValue("c_jump_speed", player_reference.base_jump_speed) -- Vertical boost
-                                    return
-                                end
-                                -- A "pushback" can be replicated (at least when walking) by removing the < 0 check and taking the abs of GetPlayerSpeed("total")
-                                local total = GetPlayerSpeed("total")
-                                jump_run_current = total
-                                if GetPlayerSpeed("x", true) < 0 then
-                                    SetPlayerSpeed("x", 0, true)
-                                end
-                                if IsStickNeutral() then -- Quickly drop to 0 if you release the left stick
-                                    jump_run_current = lerp(jump_run_current, 0, 2.5/60)
-                                elseif jump_run_current > player_reference.slope_params.base_jump_run then -- If above regular jump speed, decelerate to it.
-                                    jump_run_current = lerp(jump_run_current, player_reference.slope_params.base_jump_run, 1.1/60)
-                                elseif jump_run_current < player_reference.slope_params.base_jump_run then -- If below regular jump speed, accelerate to it.
-                                    jump_run_current = lerp(jump_run_current, player_reference.slope_params.base_jump_run, 1.5/60) -- 2
-                                end
-                                local jump_vert = GetPlayerLuaValue("c_jump_speed") -- Vertical speed during a jump
-                                if jump_vert > max_jump then
-                                    jump_vert = lerp(jump_vert, max_jump, 0.75/60)
-                                end
-                                local shrink_on = GetPlayerName() == "sonic" and GetContextFlag("IsShrink") or nil
-                                if shrink_on then
-                                    local gem_spd = total - (total * PlayerList.sonic.sonic_gem_params.purple.air_drag_rate)/60
-                                    if state_check == StateID.GEM_PURPLE then
-                                    SetPlayerSpeed("x", gem_spd, false)
-                                    SetPlayerLuaValue("c_jump_run", jump_run_current)
-                                    SetPlayerLuaValue("c_jump_walk", jump_run_current)
-                                    else
-                                    if jump_run_current > gem_spd - 0.1 then gem_spd = jump_run_current end -- This prevents decelerating towards 0 when airborne and shrunk
-                                    SetPlayerLuaValue("c_jump_run", gem_spd - 0.1)
-                                    SetPlayerLuaValue("c_jump_walk", gem_spd - 0.1)
-                                    end
-                                else
-                                    if state_check == StateID.GEM_PURPLE and GetPlayerName() == "sonic" then -- Rouge also uses this state, weirdly, so we need to check.
-                                    SetPlayerSpeed("x", jump_run_current, false)
-                                    end
-                                    SetPlayerLuaValue("c_jump_run", jump_run_current)
-                                    SetPlayerLuaValue("c_jump_walk", jump_run_current)
-                                end
-                                SetPlayerLuaValue("c_jump_speed", jump_vert)
-                                if state_check == StateID.JUMP and GetInput("a", "hold") then
-                                    SetPlayerSpeed("y", jump_vert, false) -- This causes water bounce, maybe remove?
-                                end
-                                
-                                SetPlayerLuaValue("c_run_speed_max", mMax(jump_run_current, player_max_run)) -- Carries air speed into the ground when landing
-                            end
-                        </code></pre>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/kdv_poster.png">
+                            <source src = "../webms/kdv_jump.webm" type = "video/webm">
+                        </video>
                     </div>
                  </div>
 
                  <div class="expandable-section">
                     <button class="expand-btn">Implementation Challenges</button>
                     <div class="expandable-content">
-                        <p>While the game's inherent quirks caused the most issues, there was also the problem of simply attaining the data I needed to make this work. 
-                            <br>Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided (unlike Unity or another engine), so they all have to be implemented by hand.
+                        <p>While the game's inherent quirks caused the most issues, there was also the matter of simply attaining the data I needed to make this work. 
+                            <br>Luxuries such as local coordinates, vector and quaternion math functions, or even checking if the player is grounded, are not provided (unlike Unity or similar engines), so they all have to be implemented by hand.
                             <br>A few things were just a matter of reverse engineering (such as ground checks - there's a bitfield that stores ground/air flags), but I often had to thoroughly research the math behind functions so I could implement them myself, or come up with alternative solutions using the data I already had.
                         </p>
 
-                        <p>For instance, the first feature I worked on were the slope physics. At the time, I could read/write to the player's speed (forward/upward velocity, to be precise), I could check their global coordinates, and I could detect if they were grounded, but I couldn't get any other information about the surface they were on. Detecting slopes was easy enough, I could just check the change in the player's Y coordinate while they were grounded, but getting the exact angle of incline was another matter.
+                        <p>For instance, the first feature I worked on were the slope physics. At the time, I could read/write to the player's speed (forward/upward velocity, to be precise), I could check their global coordinates, and I could detect if they were grounded, but I couldn't get any other information about the surface they were on. Detecting slopes was easy enough 
+                            - I could just check the change in the player's Y coordinate while they were grounded - but getting the exact angle of incline was another matter.
                             <br>I had a vague understanding that this was typically done with fancy calculations involving the ground normal, but this was long before I could get the vector for that, let alone do the math. 
                         </p>
 
-                        <p>Rather, I realized I could approximate an angle by normalizing the velocity of the Y coordinate with the player's forward velocity then scaling by 90 (the maximum angle the player may encounter outside of scripted sections.) The solution wasn't perfect (the reported angle would change if they ran diagonally on an incline, for example, and I chose to normalize against max velocity instead of current velocity), but it was consistent enough to let me implement the mechanic in a way that felt natural.</p>
+                        <p>Instead, I realized I could approximate an angle by normalizing the velocity of the Y coordinate with the player's forward velocity then scaling by 90 (the maximum angle the player may encounter outside of scripted sections.) The solution wasn't perfect (the reported angle would change if they ran diagonally on an incline, for example, and I chose to normalize against max velocity instead of current velocity), but it was consistent enough to let me implement the mechanic in a way that felt natural.</p>
                         <video
                             controls
                             preload="none"
                             poster="../images/physics_images/flc_poster.png">
                             <source src = "../webms/flc_slope.webm" type = "video/webm">
+                        </video>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Calculating Curves</button>
+                    <div class="expandable-content">
+                        <p>Like most 3D Sonic games, 06 has a gimmick called Rail Grinding where the player attaches to a spline and gets carried along by physics. Typically, the player can tilt the control stick to balance themselves on the rail, gaining speed by leaning into turns or flailing around if they mess up.
+                            <br>Of course, with 06 lacking physics, this was stripped down to automatically moving the player forward at a fixed speed. The player can rhythmically tap a button to speed up, but that mechanic is never explained, leaving rails as a rather uninteresting mechanic. Sonic two unused animations for leaning left and right, suggesting the developers wanted to include more traditional behavior at one point, so I took a crack at restoring it.
+                        </p>
+                        <p>While interactive rail mechanics are usually well received in the series, the actual implementation has been hit-or-miss, so I decided to simplify things a little.
+                            <ul>
+                                <li>The player has 3 balance states: Balanced, Unbalanced, and Flailing.</li>
+                                <li>Correctly balancing (no lean on straightaways, or leaning into curves) increases your speed. Small mistakes (no lean on a curve, leaning on a straightaway) make you Unbalanced and gradually reduce speed. Major mistakes (incorrect lean) quickly reduce speed.</li>
+                                <li>The player can crouch (and lean while crouching), increasing the effect of physics and balance.</li>
+                            </ul>
+                            With how context dependent this would be, I decided to write a state machine to help handle it all. But before I could start on that, I had a much more fundamental issue:
+                            <br>Detecting curves on a spline.
+                        </p>
+                        <p>Usually, one would be able to read information about a spline as the player moves along it, but once again, I didn't have that option. 
+                            <br>In fact, I didn't even have rotation information for the player. All I could do was measure the player's global coordinates.
+                        </p>
+                        <p>I broke the problem down like this:
+                            <ul>
+                                <li>Since rail movement is automated, and the Y axis is irrelevant, I can think of the map as a 2D grid.</li>
+                                <li>On a grid, a curve happens when both axes are changing at different, non-zero, rates.</li>
+                                <li>Thus, while grinding, you will always be primarily traveling along the X or Z axis, with the other axis determining the direction of the curve.</li>
+                            </ul>
+                            I could find the primary axis by comparing the velocities of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
+                        </p>
+                        <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid">
+                        <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
+                            <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your velocities could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
+                            <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/rails_poster.png">
+                            <source src = "../webms/kdv_rails.webm" type = "video/webm">
+                        </video>
+
+                        <p>Tragically, as close as this got, it simply wasn't responsive enough, especially at high speed. Any sort of frame delay in updating direction turned out to be unacceptable for a fast paced game like this, but I didn't want to throw away my work, so I went digging through memory.
+                            <br>Eventually, I found floats that updated based on how closely the player faced towards positive X and Z. Using those, I was able to quickly and accurately detect any turns as the player moved. Calculating a lack of turn still proved a tad troublesome, but it was within an acceptable margin of error to continue with the project.
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/rails_poster_upd.png">
+                            <source src = "../webms/kdv_rails_updated.webm" type = "video/webm">
                         </video>
                     </div>
                  </div>
