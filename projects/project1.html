@@ -33,19 +33,27 @@
         <article class="project-details">
             <h1>Physics Overhaul</h1>
 
-            <div class="project-image">
+            <!-- <div class="project-image">
                 <img src="../images/physics_images/bounce_poster.png" alt="WebM Will Go Here">
+            </div> -->
+            <div class="project-video">
+                <video
+                    controls
+                    preload="none"
+                    poster="../images/physics_images/physics_banner_poster.png">
+                    <source src = "../webms/physics_banner.webm" type = "video/webm">
+                </video>
             </div>
 
             <div class="project-info">
                 <div class="info-item">
-                    <span class="label">Technologies:</span>
-                    <span class="value">Placeholder Text</span>
+                    <span class="label">Release:</span>
+                    <span class="value"><i>In-dev</i></span>
                 </div>
 
                 <div class="info-item">
-                    <span class="label">Duration:</span>
-                    <span class="value">Placeholder text</span>
+                    <span class="label">Repository:</span>
+                    <span class="value">ADD REPO LINK</span>
                 </div>
             </div>
 
@@ -234,13 +242,13 @@
                     <div class="expandable-content">
                         <p>While planning the new balancing mechanics, I realized the project would be much easier if I could somehow extend the behavior of existing states. I was still unable to change the underlying state code, but if I could write a state machine in Lua that ran in tandem with the game's character controller, organizing and implementing mechanics like this would become significantly easier.
                             <br>Thankfully, I could already detect the player's current character state (C_State), so I set up my Lua state machine to work like this:
-                            <ul>
+                            <ol>
                                 <li>Write a Lua State (L_State). This consists of StateEnter, Update and StateExit functions. All states inherit from a base state, so these functions can be omitted as needed.</li>
                                 <li>Pair a Lua State (L_State) to a C_State as a "root state."</li>
                                 <li>When the player enters a paired C_State, begin running the corresponding L_State. When the player exits that C_State, automatically exit the L_State, returning to an Init state.</li>
                                 <li>As a caveat to the above, the automatic entrance is optional, and L_States can have animations associated with them. If the player leaves the root state but is in an associated animation, they'll stay in the L_State.</li>
                                 <li>A Manager function handles the automatic entrances and exits, but this can also be invoked manually through Lua, allowing you to pair multiple L_States to the same C_State.</li>
-                            </ul>
+                            </ol>
                             The L_States themselves are handled as objects stored inside a table I created to house custom parameters (for physics and whatnot) for each character. States have a reference to that character, and multiple L_States can be grouped within a class, allowing easy reference to the other grouped states.
                             <br>(This also lets a Class Exit function be assigned that only runs when you leave the class, and you'll stay within the class as long as you're in any associated animation.)
                         </p>
@@ -315,7 +323,13 @@
                             poster="../images/physics_images/abilities_poster.png">
                             <source src = "../webms/abilities.webm" type = "video/webm">
                         </video>
-                        <p>As nice as those additions were, the biggest accomplishment was creating a "new" character. I won't go into much detail as the process was the same as the above (just with running, jumping, falling, and other common and custom states (re)implemented using Invincible), but it allowed me to take one of the game's gimmick character variants (which runs a heavily stripped down version of the common character context) and flesh out their gameplay.</p>
+                        <p>As nice as those additions were, the biggest accomplishment was creating a "new" character. I won't go into detail as the process was the same as the above (just with running, jumping, falling, and other common and custom states (re)implemented using Invincible), but it allowed me to take one of the game's gimmick character variants (which runs a heavily stripped down version of the common character context) and flesh out their gameplay.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/physics_images/mach_poster.png">
+                            <source src = "../webms/mach_comparison.webm" type = "video/webm">
+                        </video>
                     </div>
                  </div>
 
@@ -326,8 +340,10 @@
                             <br>In my time modding the game, I've found a few tricks to communicate between instances, but those require manipulating object layout files and thus aren't always practical. The DLL itself exposes almost every useful game function to the Stage intsance, which is where this mod lives, so this sandboxing can usually be ignored, but it became a major roadblock when trying to implement a series staple - the Badnik Bounce.
                         </p>
                         <p>In every Sonic game - except for this one - the player will inflict damage and bounce into the air if they jump into an enemy. It's a natural move that merges combat and platforming, yet it was conspicuously absent from 06, and recreating it had two major issues:
-                            <br>Firstly, we cannot access specific collider information, so there wasn't a good way to tell when an enemy was hit.
-                            <br>Second, the hitbox would harm everything indiscriminately. Sonic 06 often uses destructible physics objects for platforming (such as wooden boxes, bridges or watch towers), so slapping a hitbox on the player's jump would heavily interfere with normal gameplay.
+                            <ol>
+                                <li>We cannot access specific collider information, so there wasn't a good way to tell when an enemy was hit.</li>
+                                <li>The hitbox would harm everything indiscriminately. Sonic 06 often uses destructible physics objects for platforming (such as wooden boxes, bridges or watch towers), so slapping a hitbox on the player's jump would heavily interfere with normal gameplay.</li>
+                            </ol>       
                         </p>
                         <p>In theory, the latter could be fixed by changing the collision flags for the hitbox attached to Jump, but the only hitbox that every character can access is directly tied to their collider, so adjusting the flags on it breaks most collision interactions.
                             <br>Instead, I chose to just make it an optional ability, tied to holding down the B button while airborne. This way the original gameplay was preserved for those who prefered it, and I had a little more freedom to turn this into a dedicated ability.
