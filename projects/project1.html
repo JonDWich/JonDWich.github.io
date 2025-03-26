@@ -192,7 +192,7 @@
                             </ul>
                             I could find the primary axis by comparing the velocities of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
                         </p>
-                        <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid">
+                        <!-- <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid"> -->
                         <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
                             <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your velocities could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
                             <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
