@@ -456,7 +456,27 @@ code {
 .dark-mode {
     --bg-color: #1e1e1e;
     --text-color: #f5f5f5;
-    --card-bg: #2c2c2c;
+    --card-bg: #a9c4ee;
+    --button-bg: #394379;
+}
+
+#dark-mode-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#dark-mode-toggle:hover {
+    background-color: #34495e;
+}
+
+.dark-mode #dark-mode-toggle {
+    color: yellow;
 }
 
 body {
@@ -464,8 +484,12 @@ body {
     color: var(--text-color);
 }
 
-.project-details, .about-me, .project-card, .contact {
+.project-details, .about-me, .project-card, .contact, .project-info {
     background-color: var(--card-bg);
+}
+
+.expand-btn {
+    background-color: var(--button-bg);
 }
 
 /* Responsive Design */
