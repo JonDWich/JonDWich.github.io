@@ -134,11 +134,11 @@
                         <p>With that in mind, I decided to write this project in Lua.</p>
                         <p>The advantages to running everything through the game's Lua were that I sidestepped DLL compatibility concerns and gained a few other perks, such as faster prototyping (functions could be modified or added on the fly since nothing is compiled) and full compatibility with any patches or other mods that may edit character behavior through the executable. 
                             It also provided a chance to make modding the game more accessible as Lua is a very beginner friendly language. I wrote a library alongside the project, allowing one to easily modify character attributes, adjust hitboxes, and more as well as a framework for creating new character states and modifying existing ones.
-                            <br>I also implemented a manager script that would load any custom files when given a filepath; this way, a mod only needs to include a 1 line change to a single existing file (to load the manager in the first place), keeping conflicts as a minimum.
+                            <br>I also implemented a manager script that would load any custom files when given a filepath; this way, a mod only needs to include a 1 line change to a single existing file (to load the manager in the first place), keeping conflicts at a minimum.
                         </p>
                         
                         <p>Unfortunately, using Lua meant I was completely beholden to the game's existing behavior. My mod acts like a layer sitting on top of the code in the executable; while it can utilize existing systems, and even implement new ones for its own use, it can't change what it's sitting on. 
-                            For example, when you jump, the game snaps you to a set horizontal speed defined in a parameter file. This state performs that snap every frame while you remain in it, meaning if I tried to write to your horizontal speed value, my change would get ignored, and since the state is lower level than my script, I couldn't easily change the behavior.</p>
+                            For example, when you jump, the game snaps you to a set horizontal speed defined in a parameter file. This state performs that snap every frame while you remain in it, meaning if I try to write to your horizontal speed, my change would get ignored, and since the state is lower level than my script, I can't easily change the behavior.</p>
                         <p>To fix this, I found where that value was stored then wrote some code to update it directly as the player ran along the ground, that way you'd keep the correct speed when entering the air. 
                             <br>From there, acceleration/deceleration was as simple as smoothly lerping the value.
                         </p>
@@ -214,7 +214,7 @@
                             I could find the primary axis by comparing the deltas of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
                         </p>
                         <!-- <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid"> -->
-                        <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
+                        <p>As for detecting <i>straight</i> movement, I just compared the delta of your secondary axis against a threshold.
                             <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your deltas could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
                             <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
                         </p>
@@ -226,7 +226,7 @@
                         </video>
 
                         <p>Tragically, as close as this got, it simply wasn't responsive enough, especially at high speed. Any sort of frame delay in updating direction turned out to be unacceptable for a fast paced game like this, but I didn't want to throw away my work, so I went digging through memory.
-                            <br>Eventually, I found floats that updated based on how closely the player faced towards positive X and Z. Using those, I was able to quickly and accurately detect any turns as the player moved. Calculating a lack of turn still proved a tad troublesome, but it was within an acceptable margin of error to continue with the project.
+                            <br>Eventually, I found floats that updated based on how closely the player faced towards positive X and Z. Using those, I easily adapted my code to quickly and accurately detect any turns as the player moved. Calculating a lack of turn still proved a tad troublesome, but it was within an acceptable margin of error to continue with the project.
                         </p>
                         <video
                             controls
@@ -242,18 +242,18 @@
                     <div class="expandable-content">
                         <p>While planning the new balancing mechanics, I realized the project would be much easier if I could somehow extend the behavior of existing states. I was still unable to change the underlying state code, but if I could write a state machine in Lua that ran in tandem with the game's character controller, organizing and implementing mechanics like this would become significantly easier.
                             <br>Thankfully, I could already detect the player's current character state (C_State), so I set up my Lua state machine to work like this:
-                            <ol>
+                            <ul>
                                 <li>Write a Lua State (L_State). This consists of StateEnter, Update and StateExit functions. All states inherit from a base state, so these functions can be omitted as needed.</li>
-                                <li>Pair a Lua State (L_State) to a C_State as a "root state."</li>
+                                <li>Register any C_State as a "root_state" (the state to extend) for the L_State.</li>
                                 <li>When the player enters a paired C_State, begin running the corresponding L_State. When the player exits that C_State, automatically exit the L_State, returning to an Init state.</li>
                                 <li>As a caveat to the above, the automatic entrance is optional, and L_States can have animations associated with them. If the player leaves the root state but is in an associated animation, they'll stay in the L_State.</li>
                                 <li>A Manager function handles the automatic entrances and exits, but this can also be invoked manually through Lua, allowing you to pair multiple L_States to the same C_State.</li>
-                            </ol>
+                            </ul>
                             The L_States themselves are handled as objects stored inside a table I created to house custom parameters (for physics and whatnot) for each character. States have a reference to that character, and multiple L_States can be grouped within a class, allowing easy reference to the other grouped states.
                             <br>(This also lets a Class Exit function be assigned that only runs when you leave the class, and you'll stay within the class as long as you're in any associated animation.)
                         </p>
                         <p>With this, even though I couldn't disable any existing state transitions or behavior, I could still radically extend what each state could do.
-                            <br>In the case of rail grinding, I opted for 3 L_States (grinding, crouching, and tricking - to accommodate the game's one rail mechanic), grouped within the "Grind" class and rooted to C_State 12 (grinding). In Lua, the declaration looked something like this:
+                            <br>In the case of rail grinding, I opted for three L_States (grinding, crouching, and tricking - to accommodate the game's one existing rail mechanic), grouped within the "Grind" class and rooted to C_State 12 (grinding). In Lua, the declaration looked something like this:
                         </p>
                         <pre><code class="language-lua">
                             PlayerList = {

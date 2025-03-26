@@ -208,7 +208,7 @@ h1, h2, h3 {
 .project-image video {
     width: 100%;
     max-height: 500px;
-    object-fit: cover;
+    object-fit: fill;
     border-radius: 4px;
 }
 
