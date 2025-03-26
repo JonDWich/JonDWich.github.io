@@ -205,7 +205,7 @@
                             </ul>
                             I could find the primary axis by comparing the velocities of your X and Z coordinates (taking whichever was greater), and I could determine direction by seeing how each moved towards positive or negative infinity.
                         </p>
-                        <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid">
+                        <!-- <img src="../images/physics_images/physics_rails_noBG.png" alt="Rail Grid"> -->
                         <p>As for detecting <i>straight</i> movement, I just compared the velocity of your secondary axis against a threshold.
                             <br>Of course, rail splines aren't perfectly rounded on curves, meaning that even if the overall trend of the rail was a curve, moment-to-moment your velocities could imply you were traveling straight. To counteract that, I required that a new direction be reported for a few frames before commiting to an update, and I sampled previous position data to better guess at the overall trend. With all that set up, I came very, <i>very</i> close to success.
                             <br>("Direction" tracks how my code thinks the rail is currently turning. The other variables are less important)
@@ -233,7 +233,7 @@
                     <button class="expand-btn">Adding New States</button>
                     <div class="expandable-content">
                         <p>While planning the new balancing mechanics, I realized the project would be much easier if I could somehow extend the behavior of existing states. I was still unable to change the underlying state code, but if I could write a state machine in Lua that ran in tandem with the game's character controller, organizing and implementing mechanics like this would become significantly easier.
-                            <br>Thankfully, I could already detect the player's current state (C_State), so I set up my Lua state machine to work like this:
+                            <br>Thankfully, I could already detect the player's current character state (C_State), so I set up my Lua state machine to work like this:
                             <ul>
                                 <li>Write a Lua State (L_State). This consists of StateEnter, Update and StateExit functions. All states inherit from a base state, so these functions can be omitted as needed.</li>
                                 <li>Pair a Lua State (L_State) to a C_State as a "root state."</li>
@@ -315,7 +315,30 @@
                             poster="../images/physics_images/abilities_poster.png">
                             <source src = "../webms/abilities.webm" type = "video/webm">
                         </video>
-                        <p>As nice as those additions were, the biggest accomplishment was creating a "new" character.</p>
+                        <p>As nice as those additions were, the biggest accomplishment was creating a "new" character. I won't go into much detail as the process was the same as the above (just with running, jumping, falling, and other common and custom states (re)implemented using Invincible), but it allowed me to take one of the game's gimmick character variants (which runs a heavily stripped down version of the common character context) and flesh out their gameplay.</p>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Bithacking Past Sandboxing</button>
+                    <div class="expandable-content">
+                        <p>One of the very few limitations left on modding this game is the sandboxing of Lua. In short, the game effectively runs unique instances of Lua to handle enemy behavior (Enemy instance), stage creation (Stage instance), story/level progression (Mission instance), etc. This means that even if you load the same scripts and declare the same globals in each instance, they'll all act independently of each other.
+                            <br>In my time modding the game, I've found a few tricks to communicate between instances, but those require manipulating object layout files and thus aren't always practical. The DLL itself exposes almost every useful game function to the Stage intsance, which is where this mod lives, so this sandboxing can usually be ignored, but it became a major roadblock when trying to implement a series staple - the Badnik Bounce.
+                        </p>
+                        <p>In every Sonic game - except for this one - the player will inflict damage and bounce into the air if they jump into an enemy. It's a natural move that merges combat and platforming, yet it was conspicuously absent from 06, and recreating it had two major issues:
+                            <br>Firstly, we cannot access specific collider information, so there wasn't a good way to tell when an enemy was hit.
+                            <br>Second, the hitbox would harm everything indiscriminately. Sonic 06 often uses destructible physics objects for platforming (such as wooden boxes, bridges or watch towers), so slapping a hitbox on the player's jump would heavily interfere with normal gameplay.
+                        </p>
+                        <p>In theory, the latter could be fixed by changing the collision flags for the hitbox attached to Jump, but the only hitbox that every character can access is directly tied to their collider, so adjusting the flags on it breaks most collision interactions.
+                            <br>Instead, I chose to just make it an optional ability, tied to holding down the B button while airborne. This way the original gameplay was preserved for those who prefered it, and I had a little more freedom to turn this into a dedicated ability.
+                            <br>As for detecting enemy collision specifically, the game already provided a way to do that.
+                        </p>
+                        <p>Enemies in this game source all their behavior from Lua. The executable will call a few generic state functions as needed (Appear, Update, OnDamage, OnDead, etc.), but the functions themselves are blank; it's up to the programmer to write further behavior. With this, I could add a generic callback function whenever an enemy takes damage or dies, signaling to another script that the event just occurred, and from there I could run some checks to infer whether the cause of that event was from a Badnik Bounce (e.g., checking distance from the player to the sender, seeing if the player was in the Jump state, etc.)
+                            <br>However, this ran into the sandboxing problem. The OnDamage call has to be executed from the Enemy instance, so I needed a way to send a boolean value from Enemy to Stage with some bridge between the two.
+                            <br>As luck would have it, 06 has a function for writing an integer to an index of an array stored temporarily in savedata. These are called TemporaryFlags internally, and usually the function is restricted to the Mission instance, but with the DLL I could use it to set a flag in the Enemy instance then check it in Stage. The trouble was, this opened a lot of doors, but the number of temp flags is rather limited, and since I was creating this mod and its underlying framework with compatibility in mind, I needed a way to store to as much information as possible using as few flags as possible.
+                        </p>
+                        <p>Enter bitflags. By reserving one index as a bitfield for Physics, I could store up to 32 unique boolean values, capable of communicating with any environment. And with that, the Badnik Bounce was ready to go.
+                        </p>
                     </div>
                  </div>
             </section>
