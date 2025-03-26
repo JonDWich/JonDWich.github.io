@@ -205,7 +205,7 @@ h1, h2, h3 {
     border-radius: 4px;
 }
 
-.project-image video {
+.project-video {
     width: 100%;
     max-height: 500px;
     height: auto;
