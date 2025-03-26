@@ -206,6 +206,10 @@ h1, h2, h3 {
 }
 
 .project-video {
+    margin-bottom: 2rem;
+}
+
+.project-video video {
     width: 100%;
     max-height: 500px;
     height: auto;
