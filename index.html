@@ -3,6 +3,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jon Wich | Portfolio</title>
+    <script>
+        // Add this script BEFORE any other scripts, ideally in the <head> of your HTML
+// or at the very top of your existing script.js
+(function() {
+    // Check localStorage for dark mode preference
+    if (localStorage.getItem('dark-mode') === 'enabled') {
+        // Add dark mode class immediately
+        document.documentElement.classList.add('dark-mode');
+        
+        // Optional: Prevent initial flash by setting a transition delay
+        document.documentElement.style.transition = 'none';
+        
+        // Remove the no-transition style after initial load
+        window.addEventListener('load', function() {
+            document.documentElement.style.transition = '';
+        });
+    }
+})();
+    </script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
