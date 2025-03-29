@@ -511,7 +511,7 @@ h1, h2, h3 {
 }
 
 /* Buttons and Interactive Elements */
-.dark-mode button, .dark-mode .expand-btn {
+button, .dark-mode .expand-btn {
     background-color: var(--accent-color);
     color: white;
     border: none;
