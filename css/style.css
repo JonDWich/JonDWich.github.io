@@ -511,14 +511,14 @@ h1, h2, h3 {
 }
 
 /* Buttons and Interactive Elements */
-button, .expand-btn {
+.dark-mode button, .dark-mode .expand-btn {
     background-color: var(--accent-color);
     color: white;
     border: none;
     transition: background-color 0.3s;
 }
 
-button:hover, .expand-btn:hover {
+.dark-mode button:hover, .dark-mode .expand-btn:hover {
     background-color: var(--accent-hover);
 }
 
