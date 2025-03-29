@@ -496,12 +496,12 @@ body {
     color: var(--text-color);
 }
 
-nav a:hover, .nav-btn:hover, .footer-nav-btn:hover {
+.dark-mode nav a:hover, .dark-mode .nav-btn:hover, .dark-mode .footer-nav-btn:hover {
     background-color: var(--accent-color);
     color: white;
 }
 
-nav a.active {
+.dark-mode nav a.active {
     background-color: var(--accent-color);
 }
 
