@@ -47,18 +47,18 @@
             <h1>Roguelike Conversion</h1>
 
             <div class="project-image">
-                <img src="../images/project3.jpg" alt="Project 3">
+                <img src="../images/project3.jpg" alt="WebM Goes Here">
             </div>
 
             <div class="project-info">
                 <div class="info-item">
                     <span class="label">Technologies:</span>
-                    <span class="value">Lua!!</span>
+                    <span class="value">Placeholder</span>
                 </div>
 
                 <div class="info-item">
                     <span class="label">Duration:</span>
-                    <span class="value">A year lol</span>
+                    <span class="value">Placeholder</span>
                 </div>
             </div>
 
@@ -197,7 +197,7 @@
                             <source src = "../webms/rogue/spawn_random.webm" type = "video/webm">
                         </video>
                         <p>Unfortunately, this system wouldn't have been viable for the keys. Even with a preloaded 3x3 layout in mind, I tried to design every system to be easily extendable to an arbitrary dungeon size. Since there are 8 unique keys, placing each one in an Inactive state for every room was simply out of the question.
-                            <br>Rather, I gave every room one key, set to Inactive, which would send a generic "GetKey" event when collected. Internally, I assign a string to a room for the key that generated within it, so when GetKey is passed I simply check which key is associated with the current room and award that to the player. This does have a downside where each room only supports one key, but that's far from an insurmountable issue.
+                            <br>Rather, I gave every room one key (set to Inactive) which would send a generic "GetKey" event when collected. Internally, I assign a string to a room for the key that generated within it, so when GetKey is passed I simply check which key is associated with the current room and award that to the player. This does have a downside where each room only supports one key, but that's far from an insurmountable issue.
                         </p>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
                     <button class="expand-btn">Preventing Impossible Dungeons</button>
                     <div class="expandable-content">
                         <p>The biggest issue with any randomly generated playing field is making sure it's actually, well, playable. In DoS, I randomly select one room as the Spawn room and another as the Boss room. Since I just randomize connections instead of generating rooms in a continuous path, I knew I'd need to take some basic measures to ensure a route from spawn to the boss, but the bigger problem was the key system.</p>
-                        <p>Because every locked door requires a unique key, I needed to somehow ensure that every necessary key between the Spawn Room and the Boss Room would generate in a room the player could somehow access, a problem further complicated since by the (up to) four uniques entryways each room can have.</p>
+                        <p>Because every locked door requires a unique key, I needed to somehow ensure that every necessary key between the Spawn Room and the Boss Room would generate in a room the player could somehow access, a problem further complicated by the (up to) four uniques entryways each room can have.</p>
                         <p>Thus, I decided to write a pathfinding algorithm that could navigate my dungeon - as it generated in Lua - from the Spawn Room to the Boss Room, keeping track of any visited rooms along the way. That way, if it encountered a locked door it could simply assign it an available key then pair that key to one of its visited rooms.
                             <br>Now, there are a great many options for very smart pathfinding in video games, and since I would be applying it to such a modest graph, there were practically no optimization concerns to speak of.
                             <br>But I didn't want a smart algorithm. I wanted a rather stupid one. Less A*, more C+.
@@ -219,7 +219,7 @@
                             <ul>
                                 <li>E.g., if the connections available are Room 6 and Room 2, and the target is Room 5, it'll choose Room 6 as that's closer numerically, even if Room 5 borders both on the graph.</li>
                                 <li>In the case of equal weights (Target room 7, connections to 6 and 8), it'll check if either option has a direct connection to the target. If neither does, it flips a coin.</li>
-                                <li>If every connection were available, this would always ensure the shortest path through the dungeon. Since that will almost never be the case, this introduces some natural variance in the route.</li>
+                                <li>If every connection were available, this would always ensure the shortest path through the dungeon. Since that will almost never be the case, this introduces some natural variance in the route while still <i>technically</i> aiming for the shortest path.</li>
                             </ul>
                             <li>Whenever a new room is visited, add it to the "Critical Path" array.</li>
                             <li>The previous room cannot be immediately revisited unless there are no other options.</li>
@@ -232,7 +232,7 @@
                             <li>If every available room in the dungeon is blacklisted, or if it takes too long to find a route (50 steps), abort entirely and regenerate the dungeon.</li>
                         </ul>
                         <p>Because the actual objects comprising the dungeon layout are all loaded ahead of time, just in their Inactive state, I can easily reroll dungeons by storing their Obj/Group Names and only Activating them if a dungeon generates successfully.
-                            <br>If it fails for any reason, every step can be redone in an instant because nothing physically changed in game world.
+                            <br>If it fails for any reason, every step can be redone in an instant because nothing physically changed the in game world.
                         </p>
                     </div>
                 </div>
