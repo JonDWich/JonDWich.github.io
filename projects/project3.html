@@ -65,7 +65,7 @@
             <section class="project-description">
                 <h2>Project Overview</h2>
                 <p><i>Brief: This mod, Dungeons of Soleanna (DoS), adds a new selectable gamemode, loading the player into a randomly generated dungeon using a 3x3 grid of rooms. To progress, the player most solve puzzles, find unique keys and defeat enemies while searching for the Boss Room.</i></p>
-                <p>After years of wanting to make a Roguelike Dungeon Crawler, I finally decided to prototype it in the most unorthodox way possible.
+                <p>After years of wanting to make a Roguelike dungeon crawler, I finally decided to prototype it in the most unorthodox way possible.
                     <br><i>Sonic The Hedgehog (2006)</i> is a game infamous for its strange controls, poor performance and myriad glitches, yet under the hood it's a surprisingly capable product, boasting the most modular design of any game in the series right out of the box (at least for modders.)
                     After working with the game for years, I became well acquainted with its quirks and decided it would be a fun challenge to try and realize my Roguelike dreams by using it like a game engine.
                     <br>This required cutting out a great many features, but it forced me to truly learn all the underlying mechanics that go into making a game like this so that I could properly adapt them into such a unique environment.
@@ -201,6 +201,49 @@
                         </p>
                     </div>
                 </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Generation Process</button>
+                    <div class="expandable-content">
+                        <p>Dungeon generation is primarily handled inside the Stage instance, where I set up an array containing a number of "room objects." Each of these objects contains some basic information (room name, number, type, etc.) as well as an array holding the room numbers for each of its borders, the status/type of its own doors, and some fields for unique background music or lighting. 
+                            <br>The other steps in the generation process focus on populating the room objects and creating an array of ObjNames to activate. Once a candidate dungeon has been created, I run a pathfinding algorithm to verify it can be completed, then either activate all the necessary objects or restart the generation step from scratch until it succeeds.
+                        </p>
+                        <p><i>Generation Order</i></p>
+                        <ol>
+                            <li>Create room object.</li>
+                                <ol>
+                                    <li>Determine column in the grid.</li>
+                                    <li>Calculate neighboring room IDs based on current row and column. Since this is a 3x3 layout, the first 3 IDs are in the bottom row while the last 3 are in the top. Anything else is considered a middle row.</li>
+                                </ol>
+                            <li>Iterate throw the room object array to establish connections between rooms.</li>
+                                <ol>
+                                    <li>Force edges on the border of the grid to generate as walls.</li>
+                                    <li>For the rest, make note of the current candidate and the adjoining candidate.</li>
+                                    <li>If an edge is marked to spawn a door or wall already, do so then continue the loop (this ensures you never have a door connecting to a wall).</li>
+                                    <li>Otherwise, flip a coin to determine whether the connection should be a door or a wall, adding the relevant name to the ObjName array and marking the adjoining edge to spawn this way as well.</li>
+                                </ol>
+                            <li>Ensure at least 1 connection between rooms. This doesn't prevent a small set of rooms from generating without connections to the larger dungeon, but it ensures there are no isolated nodes.</li>
+                            <li>Set the Room Type field for each room object.</li>
+                                <ol>
+                                    <li>Randomly select one room as the Spawn Room and another as the Boss room. These can generate anywhere, though the boss room cannot be in the middle of the grid.</li>
+                                    <li>For the rest, roll a number between 1 and 100.</li>
+                                    <li>If the maximum number of puzzle rooms hasn't been spawned, there's a 45% chance a room will be set as a Puzzle Room, where it will randomly select a puzzle available to that room ID. A reference to that puzzle object is then assigned to the room object.</li>
+                                    <li>Otherwise, mark the room as Standard and select a design layout.</li>
+                                </ol>
+                            <li>Iterate through every edge of every room and select a door type for each.</li>
+                                <ol>
+                                    <li>If the Room Type is "Spawn", the door is unlocked, meaning it will open when the player approaches.</li>
+                                    <li>If the Room Type is "Boss",  the door is unlocked, but the player will receive a warning message if they unlock the door early (originally, the door would remain locked until a certain number of rooms had been explored).</li>
+                                    <li>If the Room Type is "Puzzle", the door is locked until the player clears a puzzle. If approached from a hallway, however, the door will open (to provide access in the first place).</li>
+                                    <li>If the Room Type is "Standard", 75% of the time it'll be a "Guardian" door, requiring all enemies in the room to be defeated. If that fails (and the maximum number of locked doors hasn't been reached), 60% of the time it will be "Key" door, requiring a key to open. Otherwise, the door will generate as unlocked.</li>
+                                </ol>
+                            <li>Set the status of each door as either True or False based on whether it spawned as a door or a wall, informing the next step whether an edge should be considered when pathfinding.</li>
+                            <li>Run the pathfinding algorithm to ensure a valid layout has been spawned, restarting the generation process if one cannot be found.</li>
+                            <li>Go through the ObjName array and activate everything within it.</li>
+                        </ol>
+                    </div>
+                </div>
+
                 <div class="expandable-section">
                     <button class="expand-btn">Preventing Impossible Dungeons</button>
                     <div class="expandable-content">
@@ -234,6 +277,13 @@
                         <p>Because the actual objects comprising the dungeon layout are all loaded ahead of time, just in their Inactive state, I can easily reroll dungeons by storing their Obj/Group Names and only Activating them if a dungeon generates successfully.
                             <br>If it fails for any reason, every step can be redone in an instant because nothing physically changed the in game world.
                         </p>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Puzzle System</button>
+                    <div class="expandable-content">
+                        <p>Test</p>
                     </div>
                 </div>
             </section>
