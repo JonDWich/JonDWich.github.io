@@ -71,19 +71,19 @@
                     <br>This required cutting out a great many features, but it forced me to truly learn all the underlying mechanics that go into making a game like this so that I could properly adapt them into such a unique environment.
                 </p>
                 <p><i>NOTES: No code injection was used for this project, beyond a minor patch to enable more dynamic audio. Everything was done within the game's native Lua, along with clever game object manipulation.</i>
-                <br><i>This project was featured in the Sonic Hacking Contest, where it received an honorable mention for Best Technical Work and a trophy for Best Boss Design. Judge evaluations can be found <a href="https://docs.google.com/document/d/176JE5fHaicNrqXNVrKzY5RrT93H9a_K8OeXxCtK7-LU/edit?tab=t.0">here.</a></i></p>
+                <br><i>This project was featured in the Sonic Hacking Contest, where it received an honorable mention for Best Technical Work and a trophy for Best Boss Design. Judge evaluations can be found <a href="https://docs.google.com/document/d/176JE5fHaicNrqXNVrKzY5RrT93H9a_K8OeXxCtK7-LU/edit?tab=t.0" target = "_blank">here.</a></i></p>
 
                 <!-- Expandable parts! -->
                 <div class="expandable-section">
                     <button class="expand-btn">Terminology</button>
                     <div class="expandable-content">
-                        <p>The following are common terms used internally by the game.</p>
+                        <p>The following are common terms used internally by the game. I will be referring to these often throughout this page.</p>
                         <ul>
-                            <li>Event: A string passed to Lua by some occurrence in the game world, most commonly sent when a player enters an "eventbox" (invisible collider.) The event string, as well as behavior invoked, is entirely up to the programmer, but there are certain C methods that can be invoked directly which target objects.</li>
-                            <li>ObjectPhysics: A generic havok object. Model, Collision and other properties are pulled from a .bin file, making it easy to create custom ones.</li>
+                            <li>Event: A string passed to Lua by some occurrence in the game world, most commonly sent when a player enters an "eventbox" (invisible collider.) The event string, as well as behavior invoked, is entirely up to the programmer, but there are certain C methods that can be invoked directly which target objects (e.g., signaling, which destroys ObjectPhysics).</li>
+                            <li>ObjectPhysics: A generic havok object. Model data, Collision and other properties are pulled from a .bin file, making it easy to create custom ones.</li>
                             <li>SET: Object layout file.</li>
                             <li>ObjID: Every object has a simple internal ID corresponding to the order it was placed in the SET. Every object also has an "ObjName" parameter which is simply a string handle. Either can be used when calling a function that targets objects.</li>
-                            <li>Group: A collection of objects, collected by an internal ID, with a string handle. Events can target the Group Name, passing the message to every object in the group, and Groups can be assigned a function to run when every object within the Group is destroyed.</li>
+                            <li>Group: A list of objects, collected by their IDs, with a string handle. Events can target the Group Name, passing the message to every object in the group, and Groups can be assigned a function to run when every object within the Group is destroyed.</li>
                             <li>Inactive: Every object can be declared as Inactive on start. This means the object still gets loaded when constructing the stage, but it won't appear in the game world until activated by an event. Once activated, an object cannot be de-activated.</li>
                         </ul>
                     </div>
@@ -113,7 +113,7 @@
                 <div class="expandable-section">
                     <button class="expand-btn">Breaking Sandboxing</button>
                     <div class="expandable-content">
-                        <p>While Sonic 06 uses Lua for everything from stage creation to enemy behavior, it does not fully implement the language. Instead, Sonic Team decided to spin up different instances of Lua for each part of the game that uses it then only expose whatever C-side functions were strictly necessary. While understandable, this means that generally the only part of Lua's standard libraries or function available is the Math library.
+                        <p>While Sonic 06 uses Lua for everything from stage creation to enemy behavior, it does not fully implement the language. Instead, Sonic Team decided to spin up different instances of Lua for each part of the game that uses it, then only expose whatever C-side functions were strictly necessary. While understandable, this means that generally the only part of Lua's standard libraries or functions available is the Math library.
                             <br>Out of the 6 or so Lua instances that Sonic 06 creates, only three were important for this project.
                         </p>
                         <ul>
@@ -121,7 +121,7 @@
                             <ul>
                                 <li>High level component of level progression.</li>
                                 <li>Contains functions to manage NPC dialogue flow, display text boxes or other UI elements, and read certain flags from save data.</li>
-                                <li>Mission scripts support intercepting events and incoming textboxes by adding "on_hint" and "on_event" functions. The string associated with the text/event gets passed to the corresponding function.</li>
+                                <li>Mission scripts support intercepting events and incoming textboxes by adding "on_hint" and "on_event" functions. The string associated with the hint/event gets passed to the corresponding function.</li>
                             </ul>
 
                             <li>Enemy Instance</li>
@@ -140,7 +140,7 @@
                             </ul>
                         </ul>
                         <p>It's easy to imagine how much can be done through Lua using these instances, but the trouble is getting them to communicate as they're completely separated internally.
-                            <br>Thankfully, this is easier than it might sound. Sonic 06 has a volume object called "ScoreCollision", which targets an ObjectPhysics by its type (e.g., WoodBox, Barrel, BreakRoad) and destroys it upon entry, granting the player some points and passing a message to Lua called "Add_(Destroyed_Obj_Type)". The key is that since this is an event, it gets passed to both the Stage and Mission instances, and since it's invoked with an object, both the Enemy and Stage instances can decide when that fires.
+                            <br>Thankfully, this is easier than it might sound. Sonic 06 has a volume object called "ScoreCollision", which targets an ObjectPhysics by its type (e.g., WoodBox, Barrel, BreakRoad) and destroys it upon entry, granting the player some points and passing a message to Lua called "Add_(Destroyed_Obj_Type)". The key is that since this is an event, it gets passed to both the Stage and Mission instances, and since it's invoked with an object, both the Enemy and Stage instances can decide when that fires (either by instantiating an object into a collider or activating a pre-placed one, respectively).
                             <br>Furthermore, enemies can pass more sophisticated messages to the Mission environment by simply calling a textbox. The string invoked will be passed to the Mission's "on_hint" function, where it works as any other argument to a function. The textbox that would've been called can even be entirely ignored.
                         </p>
 
@@ -162,7 +162,7 @@
                                 <br>Instead, I decided to designate a custom enemy as a Key Manager. 
                             </p>
                             <p>The Enemy instance is still separate from Stage, which is where the actual keys are stored, but enemies can detect certain ObjectPhysics in a SET by their name, so I used that quirk to track the state of each key.
-                                <br>Each key has two ObjectPhysics assigned out of bounds, with one enemy constantly checking all of them. If the first Object gets destroyed (signaled when a key is collected), the enemy begins calling a hint message which Mission intercepts and uses to spawn HUD element. This also clears that key's hint if it was paired to a door in Mission.
+                                <br>Each key has two ObjectPhysics assigned out of bounds, with one enemy constantly checking all of them. If the first Object gets destroyed (signaled when a key is collected), the enemy begins calling a hint message which Mission intercepts and uses to spawn the HUD element. This also clears that key's hint if it was paired to a door in Mission.
                                 <br>If the second Object gets destroyed (signaled when the player unlocks the door), the enemy simply stops calling the hint message.
                             </p>
                             <video
@@ -173,6 +173,32 @@
                             </video>
                     </div>
                 </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Loading The Dungeon</button>
+                    <div class="expandable-content">
+                        <p>It's quite common for Roguelikes to generate a layout by simply stitching together pre-fabricated rooms. While this is essentially how I wanted to handle generation as well, Sonic 06 has no concept of pre-fabs, let alone dynamic object movement or exposing instantiation to Lua; at best you can spawn ObjectPhysics at coordinates using an enemy, but that doesn't even allow rotation.
+                            <br>Since randomy spawning <i>rooms</i> was out of the question, I decided to randomize the <i>connections</i> between them. This means the walls and floor (both made using ObjectPhysics) for every room are loaded for every run, but on each side of the room, both a wall and a door exist in an Inactive state. When the dungeon generates, it goes to each of these connections and decides whether to activate the door or the wall. 
+                            <br>This means that while most dungeons will have all 9 playable rooms, it's entirely possible to generate with fewer rooms, and the experience will feel fresh regardless as the way each room connects changes every time.
+                        </p>
+                        <p>For the most part, this step is just a coin flip per edge on the grid, but there are a couple quirks. I bias towards spawning at least 2 connections for the rooms in the middle column of the grid, though it isn't guaranteed, and edges on the corner of the grid will always generate as walls. 
+                            <br>Additionally, some strange room spawns are possible, like a dead-ending puzzle room, or being able to circumvent the need for a key with a longer route (though that isn't necessarily a bad thing).
+                            <br>Still, these oddities are rather uncommon, so this method works well given the limitations of the game.
+                        </p>
+                        <p>Interior layouts - and puzzles - are handled in a similar manner. Rooms have up to 4 "design layout" that they can load. These are pre-made arrangements of objects and enemies, all set to Inactive and placed in a group then copy-pasted for each room. As part of the generation step, each room will randomly select a design's Group Name to load from a table then simply activate the group.
+                            <br>Puzzles support a similar system where they're assigned valid rooms to generate in. If a room is chosen to spawn as a puzzle room, it'll randomly select an available puzzle for that room and load that design as its room layout instead.
+                            <br>Every room also has a "Spawn" layout which will take precedence if that's chosen as your initial room for the run and a "Boss" layout containing a portal to the final encounter.
+                            <br>This system does incur additional loading when you first enter a dungeon due to the larger SET file, so I had to limit how much detail I placed in each design layout, but it's completely seamless afterward; after loading, you can restart the level as many times as you like to generate new layouts without any delay.
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/rogue_images/room_poster.png">
+                            <source src = "../webms/rogue/spawn_random.webm" type = "video/webm">
+                        </video>
+                    </div>
+                </div>
+                
             </section>
         </article>
       </main>
