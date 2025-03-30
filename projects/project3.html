@@ -177,15 +177,15 @@
                 <div class="expandable-section">
                     <button class="expand-btn">Loading The Dungeon</button>
                     <div class="expandable-content">
-                        <p>It's quite common for Roguelikes to generate a layout by simply stitching together pre-fabricated rooms. While this is essentially how I wanted to handle generation as well, Sonic 06 has no concept of pre-fabs, let alone dynamic object movement or exposing instantiation to Lua; at best you can spawn ObjectPhysics at coordinates using an enemy, but that doesn't even allow rotation.
-                            <br>Since randomy spawning <i>rooms</i> was out of the question, I decided to randomize the <i>connections</i> between them. This means the walls and floor (both made using ObjectPhysics) for every room are loaded for every run, but on each side of the room, both a wall and a door exist in an Inactive state. When the dungeon generates, it goes to each of these connections and decides whether to activate the door or the wall. 
+                        <p>It's quite common for Roguelikes to generate a layout by simply stitching together pre-fabricated rooms. While this is essentially how I wanted to handle generation as well, Sonic 06 has no concept of pre-fabs, let alone dynamic object movement or exposing instantiation to Lua; at best you can spawn ObjectPhysics at coordinates using an enemy, but that doesn't even allow rotation.</p>
+                        <p>Since randomy spawning <i>rooms</i> was out of the question, I decided to randomize the <i>connections</i> between them. This means the walls and floor (both made using ObjectPhysics) for every room are loaded for every run, but on each side of the room, both a wall and a door exist in an Inactive state. When the dungeon generates, it goes to each of these connections and decides whether to activate the door or the wall. 
                             <br>This means that while most dungeons will have all 9 playable rooms, it's entirely possible to generate with fewer rooms, and the experience will feel fresh regardless as the way each room connects changes every time.
                         </p>
-                        <p>For the most part, this step is just a coin flip per edge on the grid, but there are a couple quirks. I bias towards spawning at least 2 connections for the rooms in the middle column of the grid, though it isn't guaranteed, and edges on the corner of the grid will always generate as walls. 
+                        <p>For the most part, this step is just a coin flip per edge on the graph, but there are a couple quirks. I bias towards spawning at least 2 connections for the rooms in the middle column of the grid, though it isn't guaranteed, and edges on the corner of the grid will always generate as walls. 
                             <br>Additionally, some strange room spawns are possible, like a dead-ending puzzle room, or being able to circumvent the need for a key with a longer route (though that isn't necessarily a bad thing).
                             <br>Still, these oddities are rather uncommon, so this method works well given the limitations of the game.
                         </p>
-                        <p>Interior layouts - and puzzles - are handled in a similar manner. Rooms have up to 4 "design layout" that they can load. These are pre-made arrangements of objects and enemies, all set to Inactive and placed in a group then copy-pasted for each room. As part of the generation step, each room will randomly select a design's Group Name to load from a table then simply activate the group.
+                        <p>Interior layouts are handled in a similar manner. Rooms have up to 4 "design layouts" that they can load. These are pre-made arrangements of objects and enemies, all set to Inactive and placed in a group then copy-pasted for each room. As part of the generation step, each room will randomly select a design's Group Name to load from a table then simply activate the group.
                             <br>Puzzles support a similar system where they're assigned valid rooms to generate in. If a room is chosen to spawn as a puzzle room, it'll randomly select an available puzzle for that room and load that design as its room layout instead.
                             <br>Every room also has a "Spawn" layout which will take precedence if that's chosen as your initial room for the run and a "Boss" layout containing a portal to the final encounter.
                             <br>This system does incur additional loading when you first enter a dungeon due to the larger SET file, so I had to limit how much detail I placed in each design layout, but it's completely seamless afterward; after loading, you can restart the level as many times as you like to generate new layouts without any delay.
@@ -196,9 +196,46 @@
                             poster="../images/rogue_images/room_poster.png">
                             <source src = "../webms/rogue/spawn_random.webm" type = "video/webm">
                         </video>
+                        <p>Unfortunately, this system wouldn't have been viable for the keys. Even with a preloaded 3x3 layout in mind, I tried to design every system to be easily extendable to an arbitrary dungeon size. Since there are 8 unique keys, placing each one in an Inactive state for every room was simply out of the question.
+                            <br>Rather, I gave every room one key, set to Inactive, which would send a generic "GetKey" event when collected. Internally, I assign a string to a room for the key that generated within it, so when GetKey is passed I simply check which key is associated with the current room and award that to the player. This does have a downside where each room only supports one key, but that's far from an insurmountable issue.
+                        </p>
                     </div>
                 </div>
-                
+                <div class="expandable-section">
+                    <button class="expand-btn">Preventing Impossible Dungeons</button>
+                    <div class="expandable-content">
+                        <p>The biggest issue with any randomly generated playing field is making sure it's actually, well, playable. In DoS, I randomly select one room as the Spawn room and another as the Boss room. Since I just randomize connections instead of generating rooms in a continuous path, I knew I'd need to take some basic measures to ensure a route from spawn to the boss, but the bigger problem was the key system.</p>
+                        <p>Because every locked door requires a unique key, I needed to somehow ensure that every necessary key between the Spawn Room and the Boss Room would generate in a room the player could somehow access, a problem further complicated since by the (up to) four uniques entryways each room can have.</p>
+                        <p>Thus, I decided to write a pathfinding algorithm that could navigate my dungeon - as it generated in Lua - from the Spawn Room to the Boss Room, keeping track of any visited rooms along the way. That way, if it encountered a locked door it could simply assign it an available key then pair that key to one of its visited rooms.
+                            <br>Now, there are a great many options for very smart pathfinding in video games, and since I would be applying it to such a modest graph, there were practically no optimization concerns to speak of.
+                            <br>But I didn't want a smart algorithm. I wanted a rather stupid one. Less A*, more C+.
+                        </p>
+                        <p>Since my dungeons had relatively few rooms and a compact design (i.e., minimal distance between any node on the graph), any sort of efficient algorithm would likely make things too simple. I wanted to ensure a minimum length "critical path" (the route between Spawn and Boss) of 5 rooms, and I wanted to allow dead-ends inside that route to create a more immersive dungeon.
+                            <br>Since I'd need to customize whatever algorithm I went with to handle my key needs, I decided to try writing my own with some basic recursion. This is what I came up with:
+                        </p>
+                        <ul>
+                            <li>Each room has an internal ID. Supply the function with the start room and target room (e.g., <code>FindPath(1,9)</code>).</li>
+                            <li>Check the connections available to your current room. Prioritize whichever room number is closer to your goal.</li>
+                            <ul>
+                                <li>E.g., if the connections available are Room 6 and Room 2, and the target is Room 5, it'll choose Room 6 as that's closer numerically, even if Room 5 borders both on the graph.</li>
+                                <li>In the case of equal weights (Target room 7, connections to 6 and 8), it'll check if either option has a direct connection to the target. If neither does, it flips a coin.</li>
+                                <li>If every connection were available, this would always ensure the shortest path through the dungeon. Since that will almost never be the case, this introduces some natural variance in the route.</li>
+                            </ul>
+                            <li>Whenever a new room is visited, add it to the "Critical Path" array.</li>
+                            <li>The previous room cannot be immediately revisited unless there are no other options.</li>
+                            <li>If the above occurs, or the algorithm finds itself in a room it has already visited <i>and</i> that only connects to other visited rooms, blacklist said room.</li>
+                                <ul>
+                                    <li>Blacklisted rooms are no longer considered as possible connections by the algorithm.</li>
+                                </ul>
+                            <li>When taking a step between rooms, check if either the current door or the connecting door generated as "Locked" and spawn a key using a room from the Critical Path as needed.</li>
+                            <li>If the goal is encountered too early, step backwards and attempt to path to a new node until the Critical Path array has at least 5 elements.</li>
+                            <li>If every available room in the dungeon is blacklisted, or if it takes too long to find a route (50 steps), abort entirely and regenerate the dungeon.</li>
+                        </ul>
+                        <p>Because the actual objects comprising the dungeon layout are all loaded ahead of time, just in their Inactive state, I can easily reroll dungeons by storing their Obj/Group Names and only Activating them if a dungeon generates successfully.
+                            <br>If it fails for any reason, every step can be redone in an instant because nothing physically changed in game world.
+                        </p>
+                    </div>
+                </div>
             </section>
         </article>
       </main>
