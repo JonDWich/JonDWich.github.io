@@ -4,23 +4,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roguelike | Jon Wich - Portfolio</title>
     <script>
-        // Add this script BEFORE any other scripts, ideally in the <head> of your HTML
-// or at the very top of your existing script.js
-(function() {
-    // Check localStorage for dark mode preference
-    if (localStorage.getItem('dark-mode') === 'enabled') {
-        // Add dark mode class immediately
-        document.documentElement.classList.add('dark-mode');
-        
-        // Optional: Prevent initial flash by setting a transition delay
-        document.documentElement.style.transition = 'none';
-        
-        // Remove the no-transition style after initial load
-        window.addEventListener('load', function() {
-            document.documentElement.style.transition = '';
-        });
-    }
-})();
+        (function() {
+            // Check localStorage for dark mode preference
+            if (localStorage.getItem('dark-mode') === 'enabled') {
+                // Add dark mode class immediately
+                document.documentElement.classList.add('dark-mode');
+                
+                // Optional: Prevent initial flash by setting a transition delay
+                document.documentElement.style.transition = 'none';
+                
+                // Remove the no-transition style after initial load
+                window.addEventListener('load', function() {
+                    document.documentElement.style.transition = '';
+                });
+            }
+        })();
     </script>
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -66,27 +64,115 @@
 
             <section class="project-description">
                 <h2>Project Overview</h2>
-                <p>Dungeons, innit?</p>
+                <p><i>Brief: This mod, Dungeons of Soleanna (DoS), adds a new selectable gamemode, loading the player into a randomly generated dungeon using a 3x3 grid of rooms. To progress, the player most solve puzzles, find unique keys and defeat enemies while searching for the Boss Room.</i></p>
+                <p>After years of wanting to make a Roguelike Dungeon Crawler, I finally decided to prototype it in the most unorthodox way possible.
+                    <br><i>Sonic The Hedgehog (2006)</i> is a game infamous for its strange controls, poor performance and myriad glitches, yet under the hood it's a surprisingly capable product, boasting the most modular design of any game in the series right out of the box (at least for modders.)
+                    After working with the game for years, I became well acquainted with its quirks and decided it would be a fun challenge to try and realize my Roguelike dreams by using it like a game engine.
+                    <br>This required cutting out a great many features, but it forced me to truly learn all the underlying mechanics that go into making a game like this so that I could properly adapt them into such a unique environment.
+                </p>
+                <p><i>NOTES: No code injection was used for this project, beyond a minor patch to enable more dynamic audio. Everything was done within the game's native Lua, along with clever game object manipulation.</i>
+                <br><i>This project was featured in the Sonic Hacking Contest, where it received an honorable mention for Best Technical Work and a trophy for Best Boss Design. Judge evaluations can be found <a href="https://docs.google.com/document/d/176JE5fHaicNrqXNVrKzY5RrT93H9a_K8OeXxCtK7-LU/edit?tab=t.0">here.</a></i></p>
 
                 <!-- Expandable parts! -->
-                 <div class="expandable-section">
+                <div class="expandable-section">
+                    <button class="expand-btn">Terminology</button>
+                    <div class="expandable-content">
+                        <p>The following are common terms used internally by the game.</p>
+                        <ul>
+                            <li>Event: A string passed to Lua by some occurrence in the game world, most commonly sent when a player enters an "eventbox" (invisible collider.) The event string, as well as behavior invoked, is entirely up to the programmer, but there are certain C methods that can be invoked directly which target objects.</li>
+                            <li>ObjectPhysics: A generic havok object. Model, Collision and other properties are pulled from a .bin file, making it easy to create custom ones.</li>
+                            <li>SET: Object layout file.</li>
+                            <li>ObjID: Every object has a simple internal ID corresponding to the order it was placed in the SET. Every object also has an "ObjName" parameter which is simply a string handle. Either can be used when calling a function that targets objects.</li>
+                            <li>Group: A collection of objects, collected by an internal ID, with a string handle. Events can target the Group Name, passing the message to every object in the group, and Groups can be assigned a function to run when every object within the Group is destroyed.</li>
+                            <li>Inactive: Every object can be declared as Inactive on start. This means the object still gets loaded when constructing the stage, but it won't appear in the game world until activated by an event. Once activated, an object cannot be de-activated.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
-                        <p>Goals, innit?</p>
+                        <p>I heavily based the design on the Dungeoneering skill from <i>RuneScape</i>. While my ideal game would flesh out many of those mechanics and incorporate new ones, for this project I focused on the basics:</p>
                         <ul>
-                            <li>Goal 1: Algorithm</li>
-                            <li>Goal 2: Pathfinding</li>
-                            <li>Goal 3: Procrastination lol</li>
+                            <li>Random, Grid Layout: A "floor" should consist of box-shaped rooms arranged on a grid, randomly connected at runtime. These rooms should be persistent so that the player can freely backtrack, so the connections have to be physical.</li>
+                            <li>Varied Decoration: The interior of each room should have some random variation to it. A box on its own isn't interesting to explore, but a box segmented by crumbling wooden planks or designed like a barracks changes how you interact with it. This should change between runs to keep things fresh.</li>
+                            <li>Exploratory Progression: Rooms have up to 4 doors that connect to other rooms. These doors can be locked until the player finds a unique key spawned elsewhere in the dungeon. This encourages exploring each room thoroughly and good spatial awareness as backtracking may be required.</li>
+                            <li>Puzzles: Rooms may generate as "Puzzle Rooms", requiring the player to solve one of several randomly selected puzzles to unlock the doors. Puzzles can cover practically anything, as long as it's a good switch up from regular gameplay and quick to clear on repeat runs.</li>
+                            <li>Boss Fight: One, mechanically interesting boss at the end of the dungeon. While Dungeoneering bosses tend to be more of one-trick minibosses, I took inspiration from MMO Raids for the final confrontation in DoS.</li>
                         </ul>
+                        <p>Of course, these goals came with their own sets of challenges that had be solved beforehand, such as:</p>
+                        <ul>
+                            <li>Ensuring every layout can be completed.</li>
+                            <li>Random generation in a game with virtually no prefab or instantiation system.</li>
+                            <li>Synchronizing dungeon state in code between Lua instances.</li>
+                        </ul>
+                        <p>The rest of this page will focus on the steps taken to solve these problems and implement these goals.</p>
                     </div>
                  </div>
 
-                 <div class="expandable-section">
-                    <button class="expand-btn">Technical Challenges</button>
+                <div class="expandable-section">
+                    <button class="expand-btn">Breaking Sandboxing</button>
                     <div class="expandable-content">
-                        <p>Sandboxing, wow</p>
+                        <p>While Sonic 06 uses Lua for everything from stage creation to enemy behavior, it does not fully implement the language. Instead, Sonic Team decided to spin up different instances of Lua for each part of the game that uses it then only expose whatever C-side functions were strictly necessary. While understandable, this means that generally the only part of Lua's standard libraries or function available is the Math library.
+                            <br>Out of the 6 or so Lua instances that Sonic 06 creates, only three were important for this project.
+                        </p>
+                        <ul>
+                            <li>Mission Instance</li>
+                            <ul>
+                                <li>High level component of level progression.</li>
+                                <li>Contains functions to manage NPC dialogue flow, display text boxes or other UI elements, and read certain flags from save data.</li>
+                                <li>Mission scripts support intercepting events and incoming textboxes by adding "on_hint" and "on_event" functions. The string associated with the text/event gets passed to the corresponding function.</li>
+                            </ul>
+
+                            <li>Enemy Instance</li>
+                            <ul>
+                                <li>Scripts containing enemy behavior. Contains generic functions acting as state templates (OnDamage, Update, Appear, etc.), allowing the author to create specific action sequences.</li>
+                                <li>Supports functions to manipulate the camera, move the player, call textboxes, instantiate ObjectPhysics at coordinates, check if certain ObjectPhysics exist in the SET, and more.</li>
+                                <li>The Enemy game object simply points to a table entry from one of these scripts, so it's trivial to create custom enemy behavior.</li>
+                            </ul>
+                            
+                            <li>Stage Instance</li>
+                            <ul>
+                                <li>Lower level component of level progression.</li>
+                                <li>Has access to most standard Lua libraries and functions (String, Package and Debug are excluded).</li>
+                                <li>Supports functions for interacting directly with the SET/stage, such as activating or sending pre-defined messages to objects and playing sound effects.</li>
+                                <li>Events are passed to a "ProcessMessage" function by their string.</li>
+                            </ul>
+                        </ul>
+                        <p>It's easy to imagine how much can be done through Lua using these instances, but the trouble is getting them to communicate as they're completely separated internally.
+                            <br>Thankfully, this is easier than it might sound. Sonic 06 has a volume object called "ScoreCollision", which targets an ObjectPhysics by its type (e.g., WoodBox, Barrel, BreakRoad) and destroys it upon entry, granting the player some points and passing a message to Lua called "Add_(Destroyed_Obj_Type)". The key is that since this is an event, it gets passed to both the Stage and Mission instances, and since it's invoked with an object, both the Enemy and Stage instances can decide when that fires.
+                            <br>Furthermore, enemies can pass more sophisticated messages to the Mission environment by simply calling a textbox. The string invoked will be passed to the Mission's "on_hint" function, where it works as any other argument to a function. The textbox that would've been called can even be entirely ignored.
+                        </p>
+
+                        <p>Here's an example using a locked door. </p>
+                            <ul>
+                                <li>Doors in 06 are just game objects that can be opened or closed using an event or a function from the Stage instance.</li>
+                                <li>In DoS, doors can require a "key" to open, which is randomly selected and spawned elsewhere in the dungeon. When a key is collected, it will appear on the HUD, and when it's used it will disappear.</li>
+                                <li>When the player gets near a locked door, it should either consume the key and open or display a textbox saying which key is required.</li>
+                            </ul>
+                            <p>The trouble with this is the textbox and HUD. I store dungeon information in the Stage instance, so it's easy to track if the player has collected a key and consume it to open doors (using the Lua function), but Stage can't handle UI or invoke text; Mission is needed for that.
+                                <br>It's not feasible to tell Mission how the entire dungeon generated, but it's not unreasonable to send a small piece of information the moment it's needed.
+                            </p>
+                            <p>In the Mission script, I set up a table containing an array holding basic Room objects. Each Room has four entries for doors, paired to a blank string by default. In the SET, I have eventboxes in each room (to track which room the player is in) and an eventbox by each door that generated, so using the two it's easy to infer which door the player is near. Whenever one of these Door events is passed, the Mission instance checks if there's an associated string and uses it to call a textbox if needed.
+                                <br>When the player hits a Door eventbox, the Stage instance checks if that door is locked. If it is, it checks if the corresponding Key variable is set. If it isn't, it activates a unique object that's been placed inside a score collider. This sends a message to the Mission instance which then updates the door's blank string to be that key hint and invokes it. Now, whenever the player enters that eventbox without the key, the Mission script simply calls the paired string.
+                            </p>
+                            <p>As for the UI, that required incorporating enemies.
+                                <br>There's an unused function available to the Mission instance which can call one of 9 sprites to display on the HUD, based on the string provided. The graphic file is missing from the game, but we have the tools to create one from scratch, so I opted to use that to display the player's currently held keys.
+                                <br>The trouble is, the function has to be called repeatedly to keep the HUD elements on screen, so I needed a way to loop the event and terminate on-demand. Activating an object in a score collider wasn't practical since that requires placing the objects ahead of time, so the loop couldn't be maintained indefinitely.
+                                <br>Instead, I decided to designate a custom enemy as a Key Manager. 
+                            </p>
+                            <p>The Enemy instance is still separate from Stage, which is where the actual keys are stored, but enemies can detect certain ObjectPhysics in a SET by their name, so I used that quirk to track the state of each key.
+                                <br>Each key has two ObjectPhysics assigned out of bounds, with one enemy constantly checking all of them. If the first Object gets destroyed (signaled when a key is collected), the enemy begins calling a hint message which Mission intercepts and uses to spawn HUD element. This also clears that key's hint if it was paired to a door in Mission.
+                                <br>If the second Object gets destroyed (signaled when the player unlocks the door), the enemy simply stops calling the hint message.
+                            </p>
+                            <video
+                                controls
+                                preload="none"
+                                poster="../images/rogue_images/key_poster.png">
+                                <source src = "../webms/rogue/key_req.webm" type = "video/webm">
+                            </video>
                     </div>
-                 </div>
+                </div>
             </section>
         </article>
       </main>
