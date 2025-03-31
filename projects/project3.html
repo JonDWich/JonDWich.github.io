@@ -59,8 +59,8 @@
                     <source src = "../webms/rogue/rogue_banner.webm" type = "video/webm">
                 </video>
                 <script>
-                    var video = document.currentScript.parentElement;
-                    video.volume = 0.25;
+                    var videoElement = document.currentScript.parentElement.querySelector('video');
+                    videoElement.volume = 0.25;
                 </script>
             </div>
 
