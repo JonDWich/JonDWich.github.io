@@ -51,19 +51,24 @@
         <article class="project-details">
             <h1>Roguelike Conversion</h1>
 
-            <div class="project-image">
-                <img src="../images/project3.jpg" alt="WebM Goes Here">
+            <div class="project-video">
+                <video
+                    controls
+                    preload="none"
+                    poster="../images/rogue_images/rogue_banner_poster.png">
+                    <source src = "../webms/rogue/rogue_banner.webm" type = "video/webm">
+                </video>
             </div>
 
             <div class="project-info">
                 <div class="info-item">
-                    <span class="label">Technologies:</span>
-                    <span class="value">Placeholder</span>
+                    <span class="label">Release:</span>
+                    <span class="value">UPLOAD TO GAMEBANANA</span>
                 </div>
 
                 <div class="info-item">
-                    <span class="label">Duration:</span>
-                    <span class="value">Placeholder</span>
+                    <span class="label">Repository:</span>
+                    <span class="value">ADD REPO HERE</span>
                 </div>
             </div>
 
@@ -498,16 +503,16 @@
                     <button class="expand-btn">Boss Fight</button>
                     <div class="expandable-content">
                         <p>A challenging final encounter is vital for a roguelike as it's what gives the player reason to thoroughly explore and acquire upgrades; it's a measure of both power and skill.
-                            <br>Sadly, making challenging bosses is very hard in Sonic games. Attacks are easily avoidable due to the player's high speed, combat options are fast, usually guaranteed to hit, and provide invulnerability, and having a single ring means they can survive practically any attack. Usually this forces boss fights to be more gimmicky or cinematic, but that doesn't lend itself well to replayability - which is a must in a Roguelike - so I had to get creative.
+                            <br>Sadly, making challenging bosses is very hard in Sonic games. Enemy attacks are easily avoidable due to the player's high speed, player attacks are fast, usually guaranteed to hit, and provide invulnerability, and having a single ring means one can survive practically any attack. Usually this forces boss fights to be extremely gimmicky or cinematic, but that doesn't lend itself well to replayability - which is a must in a Roguelike - so I had to get creative.
                         </p>
                         <p>I chose to use Mephiles as the base for my boss since he's easy to fit into any arena and has many useful, boss-specific attacks available to him. As mentioned at the start of this page, I styled his mechanics like an MMO raid boss, giving him several phases with changing attack patterns interspersed with gimmicks that the player must solve or play around, turning the fight itself into a sort of puzzle.
-                            <br>The fight itself is divided into four phases, with phases progressing after either solving a gimmick or inflicting enough damage on the boss.
+                            <br>The encounter is divided into four phases, each progressing after either solving a gimmick or inflicting enough damage on the boss.
                             <br>Aside from the intro, each phase opens with a short cutscene showing off the phase's special attack/gimmick.
                         </p>
                         <ol>
                             <li>Phase 1, Intro: Lasts from fight start until two "guards" have been slain.</li>
                             <ul>
-                                <li>Mephiles is invulnerable during this phase and will execute a basic attack loop where he launches projectiles, charges towards, flies into the air, then attempts to dive on to you.</li>
+                                <li>Mephiles is invulnerable during this phase and will execute a basic attack loop where he launches projectiles, charges forwards, flies into the air, then attempts to dive on to the player.</li>
                                 <li>The camera takes on a 2D perspective to make these attacks easier to avoid. They're merely meant to be a diversion while the player attempts to deal with the guards.</li>
                                 <li>Demo: 
                                     <video
@@ -524,7 +529,7 @@
                                 <li>For his attack loop, Mephiles will spawn a bomb, fly to a point on the map, and fire a few projectiles then check the player's distance.</li>
                                 <li>If the player is close, Mephiles will spawn some minions around him which swoop at the player, rapidly draining rings.</li>
                                 <li>If the player is far away, Mephiles will rush towards them. The charge can be interrupt with a well timed attack from the White Gem or by making him slam into a wall, causing him to recoil for a bit.</li>
-                                <li>Bombs are managed by spawning a series of ObjectPhysics with short lifetimes. These load particles and hitboxes when they naturally die. This system means Mephiles' AI only needs to spend one frame or so spawning the initial objects each cycle, leaving him free to attack while they're detonating. The indicator particle is custom made.</li>
+                                <li>Bombs are managed by spawning a series of ObjectPhysics with short lifetimes. These load particles and hitboxes when they naturally die. This system means Mephiles' AI only needs to spend a couple frames spawning the initial objects each cycle, leaving him free to attack while they're detonating. The indicator particle is custom made.</li>
                                 <li>Bomb demo: 
                                     <video
                                         controls
