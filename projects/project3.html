@@ -215,14 +215,14 @@
                                     <li>Determine column in the grid.</li>
                                     <li>Calculate neighboring room IDs based on current row and column. Since this is a 3x3 layout, the first 3 IDs are in the bottom row while the last 3 are in the top. Anything else is considered a middle row.</li>
                                 </ol>
-                            <li>Iterate throw the room object array to establish connections between rooms.</li>
+                            <li>Iterate through the room object array to establish connections between rooms.</li>
                                 <ol>
                                     <li>Force edges on the border of the grid to generate as walls.</li>
                                     <li>For the rest, make note of the current candidate and the adjoining candidate.</li>
                                     <li>If an edge is marked to spawn a door or wall already, do so then continue the loop (this ensures you never have a door connecting to a wall).</li>
                                     <li>Otherwise, flip a coin to determine whether the connection should be a door or a wall, adding the relevant name to the ObjName array and marking the adjoining edge to spawn this way as well.</li>
                                 </ol>
-                            <li>Ensure at least 1 connection between rooms. This doesn't prevent a small set of rooms from generating without connections to the larger dungeon, but it ensures there are no isolated nodes.</li>
+                            <li>Ensure at least 1 connection between rooms. This doesn't prevent a small set of rooms from generating without connections to the larger dungeon, but it ensures there are no individual isolated nodes.</li>
                             <li>Set the Room Type field for each room object.</li>
                                 <ol>
                                     <li>Randomly select one room as the Spawn Room and another as the Boss room. These can generate anywhere, though the boss room cannot be in the middle of the grid.</li>
@@ -281,9 +281,25 @@
                 </div>
 
                 <div class="expandable-section">
+                    <button class="expand-btn">Background Music</button>
+                    <div class="expandable-content">
+                        <p>Dungeoneering notably features a great many ambient music tracks for exploration as well different tracks that swap in when you enter combat.
+                            <br>In 06, the Stage instance has Lua functions for calling and stopping background music, so I wrote a function to manage selecting and swapping between background tracks. 
+                            <br>There were just two slight issues. Background music could not be resumed after calling StopBGM, and there was no way to detect when the player was in combat. Thankfully, both had relatively simple solutions.
+                        </p>
+                        <p>For the former, the fix required patching the game's executable - the only instance of this in the entire mod. When StopBGM is called, the game discards the module that handles BGM. This behavior wasn't present in earlier builds of the game, so the community had already developed a patch to fix it.</p>
+                        <p>As for combat, I opted to give each room a Threat Level. This is simply a field on the room object equal to the number of enemies in the room (and thus set when the design layout is chosen). When an enemy dies, the Threat Level of the room decreases by one.
+                            <br>If the player enters a room with a Threat Level > 0, the current ambient track is paused and a combat track is selected instead. If the threat level falls to 0, or the player enters a peaceful room, ambient music resumes.
+                        </p>
+                        <p>While sparsely utilized outside of puzzles, I put together a similar system for playing ambient sound effects. The table simply contains the soundback and cue of the SFX, along with an interval between calls. Active cues can be toggled on or off at all, and optionally they can be set to only play once.</p>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
                     <button class="expand-btn">Puzzle System</button>
                     <div class="expandable-content">
-                        <p>Test</p>
+                        <p>Puzzles are an integral part of any good dungeon, providing an interesting break from the typical gameplay of speeding through rooms. 
+                            <br>For DoS, I wanted most puzzles to also be little tech demos for what can be done in 06</p>
                     </div>
                 </div>
             </section>
