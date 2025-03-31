@@ -426,6 +426,66 @@
                         <p>While Sonic 06 does not have any sort of inventory system, I realized I could create my own using the game's shop windows. Shops are opened by calling a function in the Mission instance and passing a table as an argument. Within the table, you can specify dialogue (e.g., for entering and exiting the shop) and add an arbitrary number of items. Each item is assigned a name, price (which I used to represent quantity), description, and optionally events for purchasing.
                             <br>Because all this data is handled with a table, it's trivial to add, remove or modify entries on the fly, so I could write a system for creating objects in the shop format, pair them to some handle in a dictionary, then use events to add or remove items from that "shop" inventory.
                         </p>
+                        <p>As for constructing the items themselves, I wrote a simple system using inheritance that defines a base "Item" class with Constructor, Setup, and Pickup functions.
+                            <br><i>NOTE: Since metamethods are not available in the Mission instance, I wrote my own method of inheritance using a recursive search function that checks for a string index in a table. As long as a table has an entry called <code>_index</code> pointing to another table, the function will continue running.</i>
+                        </p>
+                        <pre><code class="language-lua">
+                            -- Inheritance function
+                            function inherit(lookup)
+                                -- Base class to inherit from
+                                local proto = {_index = lookup}
+
+                                -- Method for declaring new instances of an object.
+                                proto.new = function(Name)
+                                    -- Ensures instances of this object have the same base class
+                                    local new_table = {_index = proto}
+
+                                    -- Search for a constructor function then call it
+                                    search(new_table, "constructor")(new_table, {item_name = Name})
+                                    return new_table
+                                end
+                                return proto
+                            end
+
+                            -- Replicates the __index metamethod
+                            function search(base_table, search_item)
+                                if base_table[search_item] then
+                                    return base_table[search_item]
+                                elseif base_table._index then
+                                    local next_layer = base_item._index
+
+                                    -- Minimize recursive calls by checking the immediate next layer
+                                    if next_layer[search_item] then
+                                        return next_layer[search_item]
+                                    elseif next_layer._index then
+                                        return search(next_layer, search_item)
+                                    else
+                                        return false
+                                    end
+                                else
+                                    -- Item could not be found
+                                    return false
+                                end
+                            end
+                        </code></pre>
+                        <ul>
+                            <li>The base constructor defines a name and description for the item based on arguments provided, and registers the new item inside an Item List. Derived items can implement their own constructors, but they should also call the base constructor.</li>
+                            <li>The Setup function acts as a virtual method. Certain upgrades use it to register a flag to be set upon item collection. This is called when an item is declared.</li>
+                            <li>The Pickup function is very similar, getting called when an item is collected in the game world.</li>
+                        </ul>
+
+                        <p>Items are acquired by simply passing an event to the Mission instance with that item's name. The script will search your current inventory for the name of that item then either increment your quantity or replace an empty slot with it, pulling its data from the general Item List.
+                            <br>In the dungeon, unidentified items are found randomly either in rooms or by killing enemies. Taking them back to the spawn room allows you to convert them into a randomly selected upgrade that you don't already have.
+                        </p>
+                        <p>Meaningful upgrades are tricky to do in 06, so for the most part items are just Sonic's gem upgrades from the Retail game, but I managed to add a few that interact with enemies, giving you chances to flinch, stun, or instakill on hit or trigger an explosion on their death.
+                            <br>This was done similar to the key system where a manager enemy checks for existence of an off screen ObjectPhysics then sets a flag for all other enemies if it's absent.
+                        </p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/rogue_images/inventory_poster.png">
+                            <source src = "../webms/rogue/inventory.mp4" type = "video/mp4">
+                        </video>
                     </div>
                 </div>
             </section>
