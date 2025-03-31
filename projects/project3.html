@@ -291,7 +291,7 @@
                         <p>As for combat, I opted to give each room a Threat Level. This is simply a field on the room object equal to the number of enemies in the room (and thus set when the design layout is chosen). When an enemy dies, the Threat Level of the room decreases by one.
                             <br>If the player enters a room with a Threat Level > 0, the current ambient track is paused and a combat track is selected instead. If the threat level falls to 0, or the player enters a peaceful room, ambient music resumes.
                         </p>
-                        <p>While sparsely utilized outside of puzzles, I put together a similar system for playing ambient sound effects. The table simply contains the soundback and cue of the SFX, along with an interval between calls. Active cues can be toggled on or off at all, and optionally they can be set to only play once.</p>
+                        <p>While sparsely utilized outside of puzzles, I put together a similar system for playing ambient sound effects. The table simply contains the soundback and cue of the SFX, along with an interval between calls. Active cues can be toggled on or off at will, and optionally they can be set to only play once.</p>
                         <video
                             controls
                             preload="none"
@@ -343,7 +343,7 @@
                         </code></pre>
                         <p>While I won't discuss every puzzle in detail, I ended up creating these 7:</p>
                         <ol>
-                            <li>Cooking: Get a random list of ingredients from an NPC, bring them to a central barrel. Talking to the NPC afterwards opens a minigame where you must select ingredients from a UI in the correct order to "cook" a dish for a reward.</li>
+                            <li>Cooking: Get a random list of ingredients from an NPC then bring them to a central barrel. Talking to the NPC afterwards opens a minigame where you must select ingredients from a UI in the correct order to "cook" a dish for a reward.</li>
                             <ol>
                                 <li>Required creating a system for dialogue trees (06 NPCs typically send a single message string to Lua which opens a single textbox). Dialogue states included:</li>
                                 <ol>
@@ -367,7 +367,7 @@
                             <li>Maze: Light atmospheric horror. Navigate a traditional maze to find and return five scepters to the center of the room. Each scepter collected makes the atmosphere more ominous by changing the lighting or adding new ambient audio.</li>
                             <ol>
                                 <li>Impetus for writing the ambient audio manager.</li>
-                                <li><video
+                                <li>Demo:<video
                                     controls
                                     preload="none"
                                     poster="../images/rogue_images/maze_poster.png">
@@ -378,7 +378,7 @@
                             <li>Lost Woods: Use portals to progress through four rooms. Spatial audio directs you to the correct portal, a la the Lost Woods in <i>Ocarina of Time</i>.</li>
                             <ol>
                                 <li>Nothing special code-wise, just a showcase of the game's surprisingly good sound system.</li>
-                                <li><video
+                                <li>Demo:<video
                                     controls
                                     preload="none"
                                     poster="../images/rogue_images/woods_poster.png">
@@ -400,10 +400,10 @@
                             <li>Crystals: Synchronize four moving orbs by using switches to stall movement.</li>
                             <ol>
                                 <li>Each orb line is managed by an off screen enemy iterating through an array of points to spawn an ObjectPhysics.</li>
-                                <li>Standing near the switch prevents the enemy from updating to the next position in the list, stalling the orb for a cycle.</li>
+                                <li>Standing near a switch prevents the enemy from updating to the next position in the list, stalling the orb for a cycle.</li>
                                 <li>The object is created with a short lifetime so it naturally gets destroyed before the next one spawns.</li>
-                                <li>When the object reaches the central pillar, a score collider destroys it and starts a countdown. If the other orbs reach the center before the countdown expires, the room clears.</li>
-                                <li><video
+                                <li>When the object reaches the central pillar, a score collider destroys it and starts a countdown. If the other orbs reach the center before the countdown expires, the room clears. Audio indicates how many orbs are synchronized.</li>
+                                <li>Demo:<video
                                     controls
                                     preload="none"
                                     poster="../images/rogue_images/crystal_poster.png">
@@ -417,6 +417,13 @@
                                 <li>NPC dialogue changes if you've completed his missions in the base game or if you encounter this puzzle while playing as him.</li>
                             </ol>
                         </ol>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Inventory and Upgrades</button>
+                    <div class="expandable-content">
+                        While Sonic 06 does not have any sort of inventory
                     </div>
                 </div>
             </section>
