@@ -423,7 +423,9 @@
                 <div class="expandable-section">
                     <button class="expand-btn">Inventory and Upgrades</button>
                     <div class="expandable-content">
-                        While Sonic 06 does not have any sort of inventory
+                        <p>While Sonic 06 does not have any sort of inventory system, I realized I could create my own using the game's shop windows. Shops are opened by calling a function in the Mission instance and passing a table as an argument. Within the table, you can specify dialogue (e.g., for entering and exiting the shop) and add an arbitrary number of items. Each item is assigned a name, price (which I used to represent quantity), description, and optionally events for purchasing.
+                            <br>Because all this data is handled with a table, it's trivial to add, remove or modify entries on the fly, so I could write a system for creating objects in the shop format, pair them to some handle in a dictionary, then use events to add or remove items from that "shop" inventory.
+                        </p>
                     </div>
                 </div>
             </section>
