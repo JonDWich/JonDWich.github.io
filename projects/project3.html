@@ -21,6 +21,11 @@
         })();
     </script>
     <link rel="stylesheet" href="../css/style.css">
+
+    <!-- Lua highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
 </head>
 <body>
     <!-- Ribbon -->
@@ -423,8 +428,8 @@
                 <div class="expandable-section">
                     <button class="expand-btn">Inventory and Upgrades</button>
                     <div class="expandable-content">
-                        <p>While Sonic 06 does not have any sort of inventory system, I realized I could create my own using the game's shop windows. Shops are opened by calling a function in the Mission instance and passing a table as an argument. Within the table, you can specify dialogue (e.g., for entering and exiting the shop) and add an arbitrary number of items. Each item is assigned a name, price (which I used to represent quantity), description, and optionally events for purchasing.
-                            <br>Because all this data is handled with a table, it's trivial to add, remove or modify entries on the fly, so I could write a system for creating objects in the shop format, pair them to some handle in a dictionary, then use events to add or remove items from that "shop" inventory.
+                        <p>While Sonic 06 does not have any sort of traditional inventory system, I realized I could create my own using the game's shop windows. Shops are opened by calling a function in the Mission instance and passing a table as an argument. Within the table, you can specify dialogue (e.g., for entering and exiting the shop) and add an arbitrary number of items. Each item is assigned a name, price (which I used to represent quantity), description, and optionally events for purchasing.
+                            <br>Because all this data is handled with a table, it's trivial to add, remove or modify entries on the fly, so I could write a system for creating objects in the shop format, pair them to some handle in a dictionary, then use events to add or remove items from that "inventory".
                         </p>
                         <p>As for constructing the items themselves, I wrote a simple system using inheritance that defines a base "Item" class with Constructor, Setup, and Pickup functions.
                             <br><i>NOTE: Since metamethods are not available in the Mission instance, I wrote my own method of inheritance using a recursive search function that checks for a string index in a table. As long as a table has an entry called <code>_index</code> pointing to another table, the function will continue running.</i>
@@ -477,8 +482,8 @@
                         <p>Items are acquired by simply passing an event to the Mission instance with that item's name. The script will search your current inventory for the name of that item then either increment your quantity or replace an empty slot with it, pulling its data from the general Item List.
                             <br>In the dungeon, unidentified items are found randomly either in rooms or by killing enemies. Taking them back to the spawn room allows you to convert them into a randomly selected upgrade that you don't already have.
                         </p>
-                        <p>Meaningful upgrades are tricky to do in 06, so for the most part items are just Sonic's gem upgrades from the Retail game, but I managed to add a few that interact with enemies, giving you chances to flinch, stun, or instakill on hit or trigger an explosion on their death.
-                            <br>This was done similar to the key system where a manager enemy checks for existence of an off screen ObjectPhysics then sets a flag for all other enemies if it's absent.
+                        <p>Meaningful upgrades are tricky to do in 06, so for the most part items are just Sonic's gem upgrades from the Retail game, but I managed to add a few that interact with enemies, giving you chances to flinch, stun, or instakill on hit or trigger an explosion on their death. 
+                            This was done similar to the key system where a manager enemy checks for existence of an off screen ObjectPhysics then sets a flag for all other enemies if it's absent.
                         </p>
                         <video
                             controls
@@ -486,6 +491,80 @@
                             poster="../images/rogue_images/inventory_poster.png">
                             <source src = "../webms/rogue/inventory.mp4" type = "video/mp4">
                         </video>
+                    </div>
+                </div>
+                
+                <div class="expandable-section">
+                    <button class="expand-btn">Boss Fight</button>
+                    <div class="expandable-content">
+                        <p>A challenging final encounter is vital for a roguelike as it's what gives the player reason to thoroughly explore and acquire upgrades; it's a measure of both power and skill.
+                            <br>Sadly, making challenging bosses is very hard in Sonic games. Attacks are easily avoidable due to the player's high speed, combat options are fast, usually guaranteed to hit, and provide invulnerability, and having a single ring means they can survive practically any attack. Usually this forces boss fights to be more gimmicky or cinematic, but that doesn't lend itself well to replayability - which is a must in a Roguelike - so I had to get creative.
+                        </p>
+                        <p>I chose to use Mephiles as the base for my boss since he's easy to fit into any arena and has many useful, boss-specific attacks available to him. As mentioned at the start of this page, I styled his mechanics like an MMO raid boss, giving him several phases with changing attack patterns interspersed with gimmicks that the player must solve or play around, turning the fight itself into a sort of puzzle.
+                            <br>The fight itself is divided into four phases, with phases progressing after either solving a gimmick or inflicting enough damage on the boss.
+                            <br>Aside from the intro, each phase opens with a short cutscene showing off the phase's special attack/gimmick.
+                        </p>
+                        <ol>
+                            <li>Phase 1, Intro: Lasts from fight start until two "guards" have been slain.</li>
+                            <ul>
+                                <li>Mephiles is invulnerable during this phase and will execute a basic attack loop where he launches projectiles, charges towards, flies into the air, then attempts to dive on to you.</li>
+                                <li>The camera takes on a 2D perspective to make these attacks easier to avoid. They're merely meant to be a diversion while the player attempts to deal with the guards.</li>
+                                <li>Demo: 
+                                    <video
+                                        controls
+                                        preload="none"
+                                        poster="../images/rogue_images/meph_intro_poster.png">
+                                        <source src = "../webms/rogue/meph_intro.mp4" type = "video/mp4">
+                                    </video>
+                                </li>
+                            </ul>
+
+                            <li>Phase 2, Bombs: Lasts until Mephiles sustains enough damage. Mephiles will periodically spawn bombs on the ground during this phase.</li>
+                            <ul>
+                                <li>For his attack loop, Mephiles will spawn a bomb, fly to a point on the map, and fire a few projectiles then check the player's distance.</li>
+                                <li>If the player is close, Mephiles will spawn some minions around him which swoop at the player, rapidly draining rings.</li>
+                                <li>If the player is far away, Mephiles will rush towards them. The charge can be interrupt with a well timed attack from the White Gem or by making him slam into a wall, causing him to recoil for a bit.</li>
+                                <li>Bombs are managed by spawning a series of ObjectPhysics with short lifetimes. These load particles and hitboxes when they naturally die. This system means Mephiles' AI only needs to spend one frame or so spawning the initial objects each cycle, leaving him free to attack while they're detonating. The indicator particle is custom made.</li>
+                                <li>Bomb demo: 
+                                    <video
+                                        controls
+                                        preload="none"
+                                        poster="../images/rogue_images/meph_bomb_poster.png">
+                                        <source src = "../webms/rogue/meph_bombs.mp4" type = "video/mp4">
+                                    </video>
+                                </li>
+                            </ul>
+
+                            <li>Phase 3, Teleportation: Lasts until Mephiles sustains enough damage. Mephiles will teleport around in a cloud of smoke, leaving a clone behind. The player must find his final location using the smoke color.</li>
+                            <ul>
+                                <li>This loop opens with the clone trick, followed by spawning a ring of minions around the player, then teleporting to a point to throw projectiles. His guard can be shattered with the White Gem.</li>
+                                <li>Clone demo:
+                                    <video
+                                        controls
+                                        preload="none"
+                                        poster="../images/rogue_images/meph_clone_poster.png">
+                                        <source src = "../webms/rogue/meph_clones.mp4" type = "video/mp4">
+                                    </video>
+                                </li>
+                            </ul>
+
+                            <li>Phase 4, Light Arrows: Lasts until all eyes are banished using Mephiles' own attacks.</li>
+                            <ul>
+                                <li>Mephiles will fly behind a wall and begin shooting fast moving projectiles at the player. These must be directed into eyes that sequentially spawn throughout the arena.</li>
+                                <li>After all the eyes are destroyed, the player can freely approach Mephiles and finish the fight.</li>
+                                <li>Bombs will continuously spawn throughout the arena. Unlike the previous variants, these immobilize the player while quickly draining their rings, easily leading to death.</li>
+                                <li>This attack, and the bombs, was once again created using ObjectPhysics with custom particle work.</li>
+                                <li>Demo:
+                                    <video
+                                        controls
+                                        preload="none"
+                                        poster="../images/rogue_images/meph_arrow_poster.png">
+                                        <source src = "../webms/rogue/meph_arrows.mp4" type = "video/mp4">
+                                    </video>
+                                </li>
+                            </ul>
+                        </ol>
+                        <p>While most of the logic for this fight could be handled in the Enemy instance, it did require occasional communication with the Stage instance for things like creating the invisible wall at the end of the fight or playing the sound effect for the bombs (which was done by rapidly looping an sfx used elsewhere in the game).</p>
                     </div>
                 </div>
             </section>
