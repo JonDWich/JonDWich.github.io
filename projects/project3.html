@@ -292,6 +292,12 @@
                             <br>If the player enters a room with a Threat Level > 0, the current ambient track is paused and a combat track is selected instead. If the threat level falls to 0, or the player enters a peaceful room, ambient music resumes.
                         </p>
                         <p>While sparsely utilized outside of puzzles, I put together a similar system for playing ambient sound effects. The table simply contains the soundback and cue of the SFX, along with an interval between calls. Active cues can be toggled on or off at all, and optionally they can be set to only play once.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/rogue_images/audio_poster.png">
+                            <source src = "../webms/rogue/audio_combat.webm" type = "video/webm">
+                        </video>
                     </div>
                 </div>
 
@@ -299,7 +305,118 @@
                     <button class="expand-btn">Puzzle System</button>
                     <div class="expandable-content">
                         <p>Puzzles are an integral part of any good dungeon, providing an interesting break from the typical gameplay of speeding through rooms. 
-                            <br>For DoS, I wanted most puzzles to also be little tech demos for what can be done in 06</p>
+                            <br>For DoS, I wanted most puzzles to be tech demos of what can be done in 06 which meant each one would pose its own developmental challenges. That said, I was able to set up a system to for many common features.</p>
+                        <p>Broadly speaking, each puzzle is held internally as a struct with common fields for design layout, background music, lighting, relevant events, audio cues, and any unique variables the puzzle may need.
+                            <br>"Relevant events" are simply event strings that are used in solving the puzzle. When an event is passed to the Stage instance, I make it check if the current room is a puzzle room with that event registered. If it is, the string gets passed to a different function along with a reference to the struct for the current puzzle. Audio cues can be tied to these events on the struct, making them automatically play with the event is invoked.
+                            <br>If a room gets assigned as a puzzle room, the relevant struct is attached to the room, and that data is used to generate the interior.
+                        </p>
+                        <pre><code class="language-lua">
+                            -- Example puzzle struct
+                            PuzzleTable = { -- Contains all puzzles
+                                Stealth = {
+                                    -- Identifier used in construction and event handling.
+                                    puzzle_type = "Stealth",
+
+                                    -- Group Name. The assigned room is concatenated to the end here.
+                                    object_set = "pzle_stealth_",
+
+                                    -- Room ID that the puzzle generated in
+                                    assigned_room = 0,
+
+                                    -- Room IDs where the puzzle can spawn
+                                    valid_rooms = {1, 3, 5},
+
+                                    -- String indices for easy lookup
+                                    relevant_events = {PlayerFound = true, AllKilled = true},
+
+                                    puzzle_sounds = {
+                                        PlayerFound = { bank = "common", cue = "cage_start" }
+                                    },
+
+                                    -- Audio track to use, if any.
+                                    bgm = "",
+
+                                    -- ObjName for a lighting volume object
+                                    lighting = "light_orange"
+                                }
+                            }
+                        </code></pre>
+                        <p>While I won't discuss every puzzle in detail, I ended up creating these 7:</p>
+                        <ol>
+                            <li>Cooking: Get a random list of ingredients from an NPC, bring them to a central barrel. Talking to the NPC afterwards opens a minigame where you must select ingredients from a UI in the correct order to "cook" a dish for a reward.</li>
+                            <ol>
+                                <li>Required creating a system for dialogue trees (06 NPCs typically send a single message string to Lua which opens a single textbox). Dialogue states included:</li>
+                                <ol>
+                                    <li>Intro text.</li>
+                                    <li>Accepted/Declined/Re-talked intro text.</li>
+                                    <li>Main puzzle text.</li>
+                                    <li>Post-puzzle, pre-minigame text.</li>
+                                    <li>Accepted/Declined/Re-talked minigame text.</li>
+                                    <li>Minigame failure/retry text.</li>
+                                    <li>Post minigame text.</li>
+                                </ol>
+                                <li>The minigame was handled by repurposing the game's shop system. "Selecting" an ingredient is simply purchasing it.</li>
+                                <li><video
+                                    controls
+                                    preload="none"
+                                    poster="../images/rogue_images/cooking_poster.png">
+                                    <source src = "../webms/rogue/cooking.mp4" type = "video/mp4">
+                                </video></li>
+                            </ol>
+
+                            <li>Maze: Light atmospheric horror. Navigate a traditional maze to find and return five scepters to the center of the room. Each scepter collected makes the atmosphere more ominous by changing the lighting or adding new ambient audio.</li>
+                            <ol>
+                                <li>Impetus for writing the ambient audio manager.</li>
+                                <li><video
+                                    controls
+                                    preload="none"
+                                    poster="../images/rogue_images/maze_poster.png">
+                                    <source src = "../webms/rogue/maze.mp4" type = "video/mp4">
+                                </video></li>
+                            </ol>
+
+                            <li>Lost Woods: Use portals to progress through four rooms. Spatial audio directs you to the correct portal, a la the Lost Woods in <i>Ocarina of Time</i>.</li>
+                            <ol>
+                                <li>Nothing special code-wise, just a showcase of the game's surprisingly good sound system.</li>
+                                <li><video
+                                    controls
+                                    preload="none"
+                                    poster="../images/rogue_images/woods_poster.png">
+                                    <source src = "../webms/rogue/woods.mp4" type = "video/mp4">
+                                </video></li>
+                            </ol>
+
+                            <li>Stealth: Hit a switch in the center of the room guarded by sleeping enemies. Walking keeps them asleep, running wakes them up.</li>
+                            <ol>
+                                <li>Required writing a basic speedometer using off screen enemies to track how fast the distance between the player and said enemy was changing.</li>
+                                <li>Enemies can be killed using hazards in the room without waking them up.</li>
+                            </ol>
+
+                            <li>Levers: Activate 4 switches before time runs out. Switches are guarded by blinking lasers.</li>
+                            <ol>
+                                <li>Nothing special, just a good gameplay challenge.</li>
+                            </ol>
+
+                            <li>Crystals: Synchronize four moving orbs by using switches to stall movement.</li>
+                            <ol>
+                                <li>Each orb line is managed by an off screen enemy iterating through an array of points to spawn an ObjectPhysics.</li>
+                                <li>Standing near the switch prevents the enemy from updating to the next position in the list, stalling the orb for a cycle.</li>
+                                <li>The object is created with a short lifetime so it naturally gets destroyed before the next one spawns.</li>
+                                <li>When the object reaches the central pillar, a score collider destroys it and starts a countdown. If the other orbs reach the center before the countdown expires, the room clears.</li>
+                                <li><video
+                                    controls
+                                    preload="none"
+                                    poster="../images/rogue_images/crystal_poster.png">
+                                    <source src = "../webms/rogue/crystals.mp4" type = "video/mp4">
+                                </video></li>
+                            </ol>
+
+                            <li>Rescue: Activate four switches in the correct order to free an NPC. Audio cues inform you if you're on the right track.</li>
+                            <ol>
+                                <li>Completing this puzzle unlocks "Sonic Man" as a playable character in future runs.</li>
+                                <li>NPC dialogue changes if you've completed his missions in the base game or if you encounter this puzzle while playing as him.</li>
+                            </ol>
+                        </ol>
                     </div>
                 </div>
             </section>
