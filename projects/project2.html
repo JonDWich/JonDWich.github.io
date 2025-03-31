@@ -21,6 +21,11 @@
         })();
     </script>
     <link rel="stylesheet" href="../css/style.css">
+
+    <!-- Lua highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
 </head>
 <body>
     <!-- Ribbon -->
@@ -52,39 +57,71 @@
 
             <div class="project-info">
                 <div class="info-item">
-                    <span class="label">Technologies:</span>
-                    <span class="value">Lua!!</span>
+                    <span class="label">Release:</span>
+                    <span class="value"><a href="https://gamebanana.com/mods/426067" target="_blank">Gamabanana page</a></span>
                 </div>
 
                 <div class="info-item">
-                    <span class="label">Duration:</span>
-                    <span class="value">A year lol</span>
+                    <span class="label">Repository:</span>
+                    <span class="value">ADD REPO LINK</span>
                 </div>
             </div>
 
             <section class="project-description">
                 <h2>Project Overview</h2>
-                <p>Animations, innit?</p>
+                <p><i>Brief: This mod adds a new in-game menu that lets the player replay cutscenes, view character animations, change the time of day or weather conditions, and more. This was done through creative use of the game's Lua functions.</i></p>
 
+                <p>Despite being a very story driven game, <i>Sonic Frontiers</i> has no way to replay the game's numerous cutscenes. After seeing a request for this feature on Twitter, I did some digging and found the cutscenes were simply called by passing a string to a Lua function, so I set to work on making a system that would let the player view any cutscene at will. During development, this was extended to allow several other niceties missing from the original game, like a time of day or weather toggle, as well as an animation viewer.</p>
                 <!-- Expandable parts! -->
-                 <div class="expandable-section">
+                <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
-                        <p>Goals, innit?</p>
+                        <p>While technically this project could've been brute forced by making a massive table for every animation/cutscene string in the game, I chose to design it in a more modular fashion. My goal was to structure the data how one might when designing an in-engine editor that stitches together code based on input to fields.
+                            <br>This made for a far more interesting challenge, and the end result was a rather flexible system which I was able to easily extend whenever I wanted to include a new feature.
+                        </p>
+                        <p>Still, the developers clearly didn't intend for something like this to be written in Lua, so I had to get a tad creative. Broadly, these were my objectives.</p>
                         <ul>
-                            <li>Goal 1: Algorithm</li>
-                            <li>Goal 2: Pathfinding</li>
-                            <li>Goal 3: Procrastination lol</li>
+                            <li>Page system: Frontiers has a Lua function which creates an interactable box (SelectBox) on screen with up to 5 options displayed. While this can be sequentially called, there's no behavior provided for consecutive boxes.</li>
+                            <li>Minimize navigation: A staple UI rule further compounded by each SelectBox forcing a short animation to play before accepting user input. Information needed to be displayed concisely with a way to store related cutscenes or animations within sub-pages so players could more efficiently navigate the menu.</li>
+                            <li>Minimize code: Animations are often divided into multiple parts, and those parts can even have directional variants, typically specified with some suffix like "_LOOP" or "_R". Rather than writing the full animation name into a table, entries should be provided with a root and suffixes then assembled at runtime.</li>
                         </ul>
                     </div>
-                 </div>
+                </div>
 
-                 <div class="expandable-section">
-                    <button class="expand-btn">Technical Challenges</button>
+                <div class="expandable-section">
+                    <button class="expand-btn">Page Layout</button>
                     <div class="expandable-content">
-                        <p>Sandboxing, wow</p>
+                        <p>While the specifics vary slightly between options, the main categories (cutscenes, animations, etc.) have this general structure:</p>
+                        <pre><code class="language-lua">
+                            ExampleTable = {
+                                [1] = { title = "select_box_title_Example", event = "string_to_load_in_lua" },
+                                [2] = { title = "select_box_title_OtherExample", event = "other_string_to_load_in_lua" },
+                                [3] = { title = "select_box_title_ThirdOne", event = "third_string_to_load_in_lua" },
+                                [4] = { title = "select_box_title_SoManyChoices", event = "even_more_string_to_load_in_lua" },
+                                Page = { pageCount = 2, pageRemaining = 1 }
+                            }
+                        </code></pre>
+                        <p>A page will typically display three options from this table on it (option 4 is used to access the next page, and option 5 closes the menu), so pageCount tracks how many pages the menu can go through before looping, and pageRemaining is the number of options to display on the last page.</p>
                     </div>
-                 </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Cutscene Suite</button>
+                    <div class="expandable-content">
+                        <p>Cutscenes were by far the easiest data to load. Frontiers plays these by running a Lua function called <code>PlayDiEvent</code> which accepts a string argument corresponding to a cutscene file name. 
+                            <br>This meant my cutscenes tables simply needed to have fields for the SelectBox title and the filename itself, along with an option field for hiding actors in the game world (most cutscenes are played in real time, so the game occasionally does this with another Lua function).</p>
+                            <p>The real trouble came from organizing and documenting every cutscene in the game. Across the five (six, counting the DLC) islands in <i>Frontiers</i>, there are roughly 340 cutscenes (including unused ones), and none of them are named.
+                                <br>After watching every cutscene and coming up with suitably descriptive names, I divided them into the following categories:
+                            </p>
+                            <ul>
+                                <li>Main Story.</li>
+                                <li>Side Story (optional character interactions, typically 10 per island).</li>
+                                <li>Boss Events (intro/victory scenes, quick time events, etc.)</li>
+                                <li>Miscellaneous (real time variants of pre-rendered cutscenes or anything else that didn't fit in another category).</li>
+                            </ul>
+                            <p>As this was the first feature implemented, navigation is quite standard beyond that initial grouping. 3 cutscenes can display per page, with the 4th and 5th options being used to advance the page and exit the menu respectively.</p>
+                    </div>
+                </div>
             </section>
         </article>
       </main>
