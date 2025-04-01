@@ -58,7 +58,7 @@
             <div class="project-info">
                 <div class="info-item">
                     <span class="label">Release:</span>
-                    <span class="value"><a href="https://gamebanana.com/mods/426067" target="_blank">Gamabanana page</a></span>
+                    <span class="value"><a href="https://gamebanana.com/mods/426067" target="_blank">Gamebanana page</a></span>
                 </div>
 
                 <div class="info-item">
@@ -81,17 +81,17 @@
                         </p>
                         <p>Still, the developers clearly didn't intend for something like this to be written in Lua, so I had to get a tad creative. Broadly, these were my objectives.</p>
                         <ul>
-                            <li>Page system: Frontiers has a Lua function which creates an interactable box (SelectBox) on screen with up to 5 options displayed. While this can be sequentially called, there's no behavior provided for consecutive boxes.</li>
+                            <li>Page system: Frontiers has a Lua function which creates an interactable box (SelectBox) on screen with up to 5 options displayed. Another function returns an integer corresponding to the option selected.</li>
                             <li>Minimize navigation: A staple UI rule further compounded by each SelectBox forcing a short animation to play before accepting user input. Information needed to be displayed concisely with a way to store related cutscenes or animations within sub-pages so players could more efficiently navigate the menu.</li>
-                            <li>Minimize code: Animations are often divided into multiple parts, and those parts can even have directional variants, typically specified with some suffix like "_LOOP" or "_R". Rather than writing the full animation name into a table, entries should be provided with a root and suffixes then assembled at runtime.</li>
+                            <li>Minimize code: Animations are often divided into multiple parts (start/loop/end), and those parts can even have directional variants. These are typically distinguished by suffixes, so rather than writing the full animation name into a table, entries should be provided with a root and suffixes then assembled at runtime.</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="expandable-section">
-                    <button class="expand-btn">Page Layout</button>
+                    <button class="expand-btn">Basic Page Layout</button>
                     <div class="expandable-content">
-                        <p>While the specifics vary slightly between options, the main categories (cutscenes, animations, etc.) have this general structure:</p>
+                        <p>While the specifics vary slightly between options, this is the general structure I used for pages.</p>
                         <pre><code class="language-lua">
                             ExampleTable = {
                                 [1] = { title = "select_box_title_Example", event = "string_to_load_in_lua" },
@@ -102,16 +102,68 @@
                             }
                         </code></pre>
                         <p>A page will typically display three options from this table on it (option 4 is used to access the next page, and option 5 closes the menu), so pageCount tracks how many pages the menu can go through before looping, and pageRemaining is the number of options to display on the last page.</p>
+                        <p>Page navigation is handled with a simple recursive function, and two upvalues (<code>cutsceneIndex, currentPage</code>) track your index in the table and current page respectively, with the latter just indicating when to reset back to page 1. This could have been accomplished with a single variable, but splitting it into two made things more intuitive.
+                            <br>When the function is called, it grabs up to 3 entries from the table then extracts their titles to form the SelectBox. Once the player presses a button, the event string is extracted from the corresponding entry then used as either further input or a function argument, depending on the type of menu.
+                        </p>
+                        <pre><code class="language-lua">
+                            -- Pseudocode
+                            function CutsceneSelect()
+                                local entry_1 = ExampleTable[cutsceneIndex]
+                                local entry_2 = ExampleTable[cutsceneIndex+1] or {}
+                                local entry_3 = ExampleTable[cutsceneIndex+2] or {}
+                                local select_box_titles = { 
+                                    entry_1.title, 
+                                    entry_2.title, 
+                                    entry_3.title, 
+                                    "page_next", 
+                                    "menu_exit" 
+                                }
+
+                                -- Easy access to chosen entry
+                                local entry_reference = {}
+
+                                -- Summon the box and store the chosen button
+                                ShowSelectBox(table.unpack(select_box_titles))
+                                local choice = GetSelectResult()
+
+                                -- Adjust choice if entries 2 or 3 were blank
+                                -- ...
+                                
+                                -- Update entry_reference
+                                if choice == 0 then
+                                    entry_reference = entry_1
+                                elseif choice == 2 then
+                                    -- And so on
+                                -- ...
+                                elseif choice == 3 then
+                                  -- "Next Page" option
+                                    currentPage++
+
+                                    -- Length of the table, or the next "page"
+                                    cutsceneIndex = math.min(#ExampleTable, cutsceneIndex + 3)
+
+                                    if currentPage > ExampleTable.Page.pageCount then
+                                        ResetParams() -- reset currentPage and cutsceneIndex to 1
+                                    end
+                                    
+                                    -- Tail call
+                                    return CutsceneSelect()
+                                elseif choice == 4 then
+                                  -- "Exit menu" option
+                                    ResetParams()
+                                end
+                            end
+                        </code></pre>
                     </div>
                 </div>
 
                 <div class="expandable-section">
                     <button class="expand-btn">Cutscene Suite</button>
                     <div class="expandable-content">
-                        <p>Cutscenes were by far the easiest data to load. Frontiers plays these by running a Lua function called <code>PlayDiEvent</code> which accepts a string argument corresponding to a cutscene file name. 
-                            <br>This meant my cutscenes tables simply needed to have fields for the SelectBox title and the filename itself, along with an option field for hiding actors in the game world (most cutscenes are played in real time, so the game occasionally does this with another Lua function).</p>
-                            <p>The real trouble came from organizing and documenting every cutscene in the game. Across the five (six, counting the DLC) islands in <i>Frontiers</i>, there are roughly 340 cutscenes (including unused ones), and none of them are named.
-                                <br>After watching every cutscene and coming up with suitably descriptive names, I divided them into the following categories:
+                        <p>Cutscenes were by far the easiest data to manage. Frontiers plays these by running a Lua function called <code>PlayDiEvent</code> which accepts a string argument corresponding to a cutscene file name. 
+                            <br>This meant my cutscene tables simply needed to have fields for the SelectBox title and the filename itself (like the example table in the previous section), along with an optional field for hiding actors in the game world (most cutscenes are played in real time, so the game occasionally does this with another Lua function).</p>
+                            <p>The real trouble came from organizing and documenting every cutscene in the game. Across the five (six, counting the DLC) islands in Frontiers, there are roughly 340 cutscenes (including unused ones), and none of them are named.
+                                <br>After watching every cutscene and coming up with suitably descriptive monikers, I divided them into the following categories:
                             </p>
                             <ul>
                                 <li>Main Story.</li>
@@ -119,7 +171,13 @@
                                 <li>Boss Events (intro/victory scenes, quick time events, etc.)</li>
                                 <li>Miscellaneous (real time variants of pre-rendered cutscenes or anything else that didn't fit in another category).</li>
                             </ul>
-                            <p>As this was the first feature implemented, navigation is quite standard beyond that initial grouping. 3 cutscenes can display per page, with the 4th and 5th options being used to advance the page and exit the menu respectively.</p>
+                            <p>To manage this additional layer without tweaking my page structure, I added an upvalue called <code>ReferenceTable</code>. Each of the options above is stored in their own table, so when the player selects the Cutscene page and chooses their category, ReferenceTable becomes a reference to that category, so the page navigation code operates on ReferenceTable instead.</p>
+                            <video
+                                controls
+                                preload="none"
+                                poster="../images/theater_images/cutscene_poster.png">
+                                <source src = "../webms/theater/cutscenes.mp4" type = "video/webm">
+                            </video>
                     </div>
                 </div>
             </section>
