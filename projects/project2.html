@@ -94,15 +94,15 @@
                         <p>While the specifics vary slightly between options, this is the general structure I used for pages.</p>
                         <pre><code class="language-lua">
                             ExampleTable = {
-                                [1] = { title = "select_box_title_Example", event = "string_to_load_in_lua" },
-                                [2] = { title = "select_box_title_OtherExample", event = "other_string_to_load_in_lua" },
-                                [3] = { title = "select_box_title_ThirdOne", event = "third_string_to_load_in_lua" },
-                                [4] = { title = "select_box_title_SoManyChoices", event = "even_more_string_to_load_in_lua" },
+                                [1] = { title = "sbox_title_1", event = "chosen_string_1" },
+                                [2] = { title = "sbox_title_2", event = "chosen_string_2" },
+                                [3] = { title = "sbox_title_3", event = "chosen_string_3" },
+                                [4] = { title = "sbox_title_4", event = "chosen_string_4" },
                                 Page = { pageCount = 2, pageRemaining = 1 }
                             }
                         </code></pre>
-                        <p>A page will typically display three options from this table on it (option 4 is used to access the next page, and option 5 closes the menu), so pageCount tracks how many pages the menu can go through before looping, and pageRemaining is the number of options to display on the last page.</p>
-                        <p>Page navigation is handled with a simple recursive function, and two upvalues (<code>cutsceneIndex, currentPage</code>) track your index in the table and current page respectively, with the latter just indicating when to reset back to page 1. This could have been accomplished with a single variable, but splitting it into two made things more intuitive.
+                        <p>A page will typically display three options from this table at a time (option 4 is used to access the next page, and option 5 closes the menu), so pageCount tracks how many pages the menu can go through before looping, and pageRemaining is the number of options to display on the last page.</p>
+                        <p>Page navigation is handled with a simple recursive function, and two upvalues (<code>cutsceneIndex, currentPage</code>) to track your index in the table and current page respectively, with the latter just indicating when to reset back to page 1. This could have been accomplished with a single variable, but splitting it into two made things more intuitive.
                             <br>When the function is called, it grabs up to 3 entries from the table then extracts their titles to form the SelectBox. Once the player presses a button, the event string is extracted from the corresponding entry then used as either further input or a function argument, depending on the type of menu.
                         </p>
                         <pre><code class="language-lua">
@@ -161,23 +161,54 @@
                     <button class="expand-btn">Cutscene Suite</button>
                     <div class="expandable-content">
                         <p>Cutscenes were by far the easiest data to manage. Frontiers plays these by running a Lua function called <code>PlayDiEvent</code> which accepts a string argument corresponding to a cutscene file name. 
-                            <br>This meant my cutscene tables simply needed to have fields for the SelectBox title and the filename itself (like the example table in the previous section), along with an optional field for hiding actors in the game world (most cutscenes are played in real time, so the game occasionally does this with another Lua function).</p>
-                            <p>The real trouble came from organizing and documenting every cutscene in the game. Across the five (six, counting the DLC) islands in Frontiers, there are roughly 340 cutscenes (including unused ones), and none of them are named.
-                                <br>After watching every cutscene and coming up with suitably descriptive monikers, I divided them into the following categories:
-                            </p>
+                            <br>This meant my cutscene tables simply needed to have fields for the SelectBox title and the filename itself (like the example table in the previous section), along with an optional field for hiding actors in the game world (most cutscenes are played in real time, so the game occasionally does this with another Lua function).
+                        </p>
+                        <p>The real trouble came from organizing and documenting every cutscene in the game. Across the five (six, counting the DLC) islands in Frontiers, there are roughly 340 cutscenes (including unused ones), and none of them are named.
+                            <br>After watching every cutscene and coming up with suitably descriptive monikers, I divided them into the following categories:
+                        </p>
+                        <ul>
+                            <li>Main Story.</li>
+                            <li>Side Story (optional character interactions, typically 10 per island).</li>
+                            <li>Boss Events (intro/victory scenes, quick time events, etc.)</li>
+                            <li>Miscellaneous (real time variants of pre-rendered cutscenes or anything else that didn't fit in another category).</li>
+                        </ul>
+                        <p>To manage this additional layer without tweaking my page structure, I added an upvalue called <code>ReferenceTable</code>. Each of the options above is stored in their own table, so when the player selects the Cutscene page and chooses their category, ReferenceTable becomes a reference to that category, and the page navigation code then operates ReferenceTable.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/theater_images/cutscene_poster.png">
+                            <source src = "../webms/theater/cutscenes.mp4" type = "video/webm">
+                        </video>
+                        <p><i>Note: Since most cutscenes are play in real time, I automatically select the correct table for the player's current island. The full 340 cutscenes will never be available in one instance.</i></p>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Animation Suite</button>
+                    <div class="expandable-content">
+                        <p>It took about 4 days to fully design and implement the cutscene viewer (along with time of day and weather options). It took an additional 8 to add the animation viewer.
+                            <br>Once again, Frontiers left in a Lua function for changing the player's animation, <code>ChangePlayerAnimInHold</code>. This accepts a string argument for the animation, as well as a float for how long the animation should play. While this meant I could re-use the page structure from the Cutscene Suite (with animations being categorized by combat, traversal, stage gimmick, etc.), the code needed to be heavily adapted to keep with the project goals.
+                        </p>
+                        <p>Take Sonic's Sky Diving animation for example. There are 9 animations for this state - <code>DIVE_START, DIVE, DIVE_FAST, DIVE_FAST_LOOP, DIVE_FAST_END, DIVE_IDLE_START, DIVE_IDLE, DIVE_DAMAGE, DIVE_PIPE</code>.</p>
+                        <ul>
+                            <li>Organizationally, this is a problem as the animations take up three entire pages. If the player isn't interested in a Dive animation, it's not easy to skip them. Instead, "Diving" should be presented as one option that opens a new menu containing these variants. This new menu would need to support pages as well due to the number of variants.</li>
+                            <li>Some of these variants have sub parts, like <code>DIVE_FAST</code> having <code>_LOOP</code> and <code>_END</code> segments. Realistically, the player will want to view the entire sequence, so these would need to be played in order without extra user input.</li>
+                            <li>While not an issue with this animation, some entries can have directional variants that also have sub parts attached. These would need to once again be handled by opening a new menu.</li>
                             <ul>
-                                <li>Main Story.</li>
-                                <li>Side Story (optional character interactions, typically 10 per island).</li>
-                                <li>Boss Events (intro/victory scenes, quick time events, etc.)</li>
-                                <li>Miscellaneous (real time variants of pre-rendered cutscenes or anything else that didn't fit in another category).</li>
+                                <li>Typically, sub parts and direction suffixes append in that order, but it's not consistent (e.g., <code>SLIDEDOWN_START_R</code> vs. <code>BUMP_JUMP_R_LOOP</code>), so the order would need to be malleable.</li>
                             </ul>
-                            <p>To manage this additional layer without tweaking my page structure, I added an upvalue called <code>ReferenceTable</code>. Each of the options above is stored in their own table, so when the player selects the Cutscene page and chooses their category, ReferenceTable becomes a reference to that category, so the page navigation code operates on ReferenceTable instead.</p>
-                            <video
-                                controls
-                                preload="none"
-                                poster="../images/theater_images/cutscene_poster.png">
-                                <source src = "../webms/theater/cutscenes.mp4" type = "video/webm">
-                            </video>
+                        </ul>
+                        <p>In short, this meant I would need a lot of string manipulation if I wanted to avoid hardcoding every entry, so I tweaked my table structure a bit.</p>
+                        <ul>
+                            <li>Each entry in the animation table still supports Title and Event. Event is now the root animation name (e.g., <code>DIVE</code>).</li>
+                            <li>Entries now support fields for <code>direction, subcategories, appends, duration</code>. These can either be an array of values or directly assigned.</li>
+                            <ul>
+                                <li>Strings inside <code>appends</code> are concatenated with the root name to create new strings then stored inside an array. This step normally happens after directions are considered, but a flag can be included to make it happen first.</li>
+                                <li><code>Direction</code> and <code>subcategories</code> hold prefixes/suffixes that will modify the root name. Their presence signals that a new menu should be constructed by concatenating them with the root word to create new strings.</li>
+                                <li>Directions do not support pages and thus can contain 5 options (neutral plus four directional variants). Subcategories can only display 4 options at a time since they support pages.</li>
+                                <li>Duration informs how long each part of the final sequence should play for, in seconds.</li>
+                            </ul>
+                        </ul>
                     </div>
                 </div>
             </section>
