@@ -177,7 +177,7 @@
                             controls
                             preload="none"
                             poster="../images/theater_images/cutscene_poster.png">
-                            <source src = "../webms/theater/cutscenes.mp4" type = "video/webm">
+                            <source src = "../webms/theater/cutscenes.mp4" type = "video/mp4">
                         </video>
                         <p><i>Note: Since most cutscenes are play in real time, I automatically select the correct table for the player's current island. The full 340 cutscenes will never be available in one instance.</i></p>
                     </div>
@@ -191,7 +191,7 @@
                         </p>
                         <p>Take Sonic's Sky Diving animation for example. There are 9 animations for this state - <code>DIVE_START, DIVE, DIVE_FAST, DIVE_FAST_LOOP, DIVE_FAST_END, DIVE_IDLE_START, DIVE_IDLE, DIVE_DAMAGE, DIVE_PIPE</code>.</p>
                         <ul>
-                            <li>Organizationally, this is a problem as the animations take up three entire pages. If the player isn't interested in a Dive animation, it's not easy to skip them. Instead, "Diving" should be presented as one option that opens a new menu containing these variants. This new menu would need to support pages as well due to the number of variants.</li>
+                            <li>Organizationally, this is a problem as the animations would take up three entire pages. If the player isn't interested in a Dive animation, it's not easy to skip them. Instead, "Diving" should be presented as one option that opens a new menu containing these variants. This new menu would need to support pages as well due to the number of variants.</li>
                             <li>Some of these variants have sub parts, like <code>DIVE_FAST</code> having <code>_LOOP</code> and <code>_END</code> segments. Realistically, the player will want to view the entire sequence, so these would need to be played in order without extra user input.</li>
                             <li>While not an issue with this animation, some entries can have directional variants that also have sub parts attached. These would need to once again be handled by opening a new menu.</li>
                             <ul>
@@ -209,6 +209,71 @@
                                 <li>Duration informs how long each part of the final sequence should play for, in seconds.</li>
                             </ul>
                         </ul>
+                        <p>I chose this system since it was the easiest to imagine in an editor. If this were to be used in, say, Unity's inspector, it would be logical to have a field for the animation name with checkboxes as children for sub parts or directions.
+                            <br>With all that in mind, the internal structure for Dive would look like this:
+                        </p>
+                        <pre><code class="language-lua">
+                            TraversalTable = {
+                                [1] = {
+                                    title = "button_name_dive",
+                                    event = "DIVE",
+
+                                    -- Applies to each entry since a table isn't used.
+                                    duration = 5,
+                                    subcategories = {
+                                        "", "_DAMAGE", "_FAST", 
+                                        "IDLE_", "PIPE",
+                                        pageCount = 2
+                                    },
+                                    appends = {
+                                        -- Constructs "DIVE_START"
+                                        [1] = {"_START"},
+
+                                        -- Constructs "DIVE_FAST",
+                                        -- "DIVE_FAST_LOOP",
+                                        -- "DIVE_FAST_END"
+                                        [3] = {"", "_LOOP", "_END"},
+
+                                        -- "DIVE_FAST_START", "DIVE_FAST"
+                                        [4] = {"_START", ""}
+                                    }
+                                }
+                            }
+                        </code></pre>
+                        <p>When one of the dive animations is finally selected, an array gets constructed using these values then a function is called to iterate over it, playing each animation in the array.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/theater_images/diving_poster.png">
+                            <source src = "../webms/theater/diving.mp4" type = "video/mp4">
+                        </video>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Animation Sub Pages</button>
+                    <div class="expandable-content">
+                        <p>My insistance on minimizing hardcoding created a real issue with the animation sub categories described in the previous section. Up until this point, every page had a clearly defined structure defined ahead of time in Lua and tracked using upvalues. This meant recursion was the simplest choice navigating the table as a function simply had to modify those upvalues then call itself to display a new page.
+                        </p>
+                        <p>When the player first selects an animation, I retrieve the entry from the main Animation Table the same way I handle cutscenes, then I check its properties.</p>
+                        <ol>
+                            <li>If there's a Direction table, create a new menu using the <code>AnimDirSelect</code> function.</li>
+                            <li>If there's a subcategory, create a new menu using the <code>AnimSubCatSelect</code> function.</li>
+                            <li>If the animation has multiple parts (loop, end, etc.), run the <code>AnimStitch</code> function to generate an array of strings then play them sequentially.</li>
+                            <li>Else, play the animation outright.</li>
+                        </ol>
+                        <p>Directional variants were simple enough to handle as they were capped at 5 directions, but subcategories could require pages. The issue is, subcategories don't have a formal, structured table attached like regular pages. They're assembled on the fly whenever <code>AnimSubCatSelect</code> is called which meant using recursion for page navigation would completely wipe the table, and all associated data, each time.</p>
+                        <p>Ultimately, I found an iterative approach to be the best solution here.
+                            <br>The function takes a reference to the specific animation entry as a parameter. When first called, it constructs tables for all possible SelectBox names and animation sequences by iterating over the reference. From there, an infinite loop begins.
+                            <br>From there, local variables declared outside of the loop track which entries get displayed as well as what to retrieve when the player finally makes a choice.
+                        </p>
+                        <p>In a few rare instances, an option in a subcategory needs to open yet another menu to display its variations. I was unable to cleanly solve that within the loop, so for those cases I write flags in the main table which direct to a separate sub table with the original animation structure. If the loop encounters these flags, it will perform a recursive call on <code>AnimSubCatSelect</code>, effectively allowing subcategories to go infinitely deep.</p>
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/theater_images/anim_deep_poster.png">
+                            <source src = "../webms/theater/anim_deep.mp4" type = "video/mp4">
+                        </video>
                     </div>
                 </div>
             </section>
