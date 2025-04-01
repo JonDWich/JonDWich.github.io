@@ -54,29 +54,46 @@
 
             <div class="project-info">
                 <div class="info-item">
-                    <span class="label">Technologies:</span>
-                    <span class="value">Lua!!</span>
+                    <span class="label">Release:</span>
+                    <span class="value"><a href="https://gamebanana.com/mods/420414" target="_blank">Gamebanana page</a></span>
                 </div>
 
                 <div class="info-item">
-                    <span class="label">Duration:</span>
-                    <span class="value">A year lol</span>
+                    <span class="label">Repository:</span>
+                    <span class="value">ADD REPO LINK</span>
                 </div>
             </div>
 
             <section class="project-description">
                 <h2>Project Overview</h2>
-                <p>Combat, innit?</p>
+                <p><i>Brief: Originally written in Lua then completely redone in C#, this mod adds a style grading system to the combat of Sonic Frontiers, rewarding varied combos, while also retooling the combat system to make fights more engaging without becoming overly slow.</i></p>
+                <p>Sonic Frontiers was notably the first Sonic game in 14 years with combat that went beyond "press button to insta-kill enemy." 
+                    <br>At the time of release, I had been <a href="https://gamebanana.com/mods/460778" target="_blank">developing a mod</a> for a different Sonic game that added in-combat scoring for combos, so when faced with a new title that both heavily integrated Lua and had a proper combat system, I set to work on writing a port.
+                </p>
 
                 <!-- Expandable parts! -->
                  <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
-                        <p>Goals, innit?</p>
+                        <p>While plenty of combat mods were promptly released for the game, they typically focused on making fights longer by raising enemy HP, lowering player damage and speeding up player attacks. There was certainly an audience for this type of gameplay, but I found it made things too repetitive; combat turned into a slog where you rapidly mashed buttons until your opponent eventually fizzled out. It wasn't more challenging or mechanically deeper, it just took longer.</p>
+                        <p>For my mod, I took cues from character action games like <i>Devil May Cry</i>. I wanted stylish combos to be rewarded both extrinsicly with a ranking system and intrinsicly by speeding up combat. That way, each new ability would feel like a new tool in the player's repertoire (rather than a different flavor of insta-kill), and mastery of combat would preserve the game's snappy pace.</p>
+                        <p>Luckily, the game already had a mechanic for faster combat called <i>Phantom Rush</i> where attack hit adds to a meter which temporarily boosts damage by 20% once filled. This isn't particularly useful in the base game, of course, but it was the perfect system to pursue for this mod.
+                            <br>With an outline in mind, I set the following goals:
+                        </p>
                         <ul>
-                            <li>Goal 1: Algorithm</li>
-                            <li>Goal 2: Pathfinding</li>
-                            <li>Goal 3: Procrastination lol</li>
+                            <li><i>Devil May Cry</i>-esque Grading: Every attack should grant invisible score contributing to a visible rank.</li>
+                            <ul>
+                                <li>Repeated attacks "stale", granting less score, while "fresh" attacks unstale other moves.</li>
+                                <li>Specific score is invisible due to technical limitations (no way to display a meter smoothly). Instead, a letter grade is given using the built in notification function.</li>
+                                <li>Score decays over time. At the end of combat, exp is awarded based on score.</li>
+                            </ul>
+                            <li>Snappy combat: It's fine if mindlessly mashing buttons is ineffective, but a skilled player should be able to tear through enemies.</li>
+                            <ul>
+                                <li>Accomplished by reducing the base damage of each attack but drastically increasing the Phantom Rush multiplier.</li>
+                                <li>Phantom Rush is now gained based on score, meaning varied combos fill the gauge faster.</li>
+                                <li>Phantom Rush depletes faster over tme, incentivizing constant attacks.</li>
+                                <li>Existing attack speed or inputs should not be adjusted unless absolutely necessary. Guide the player towards learning advanced techniques like animation canceling instead of simple mashing.</li>
+                            </ul>
                         </ul>
                     </div>
                  </div>

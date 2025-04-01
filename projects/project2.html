@@ -74,7 +74,7 @@
 
             <section class="project-description">
                 <h2>Project Overview</h2>
-                <p><i>Brief: This mod adds a new in-game menu that lets the player replay cutscenes, view character animations, change the time of day or weather conditions, and more. This was done through creative use of the game's Lua functions.</i></p>
+                <p><i>Brief: This mod adds a new in-game menu that lets the player replay cutscenes, view character animations, change the time of day or weather conditions, and more. This was done through creative use of the game's Lua functions as well as minor code injection to allow tracking time of day and spawning the menu with a button combination.</i></p>
 
                 <p>Despite being a very story driven game, <i>Sonic Frontiers</i> has no way to replay the game's numerous cutscenes. After seeing a request for this feature on Twitter, I did some digging and found the cutscenes were simply called by passing a string to a Lua function, so I set to work on making a system that would let the player view any cutscene at will. During development, this was extended to allow several other niceties missing from the original game, like a time of day or weather toggle, as well as an animation viewer.</p>
                 <p><i>NOTE: This page focuses on the design and implementation of the cutscene and animation viewers. Weather toggling and time of day selection were handled by updating variables then calling game functions with the methods outlined below.</i></p>
