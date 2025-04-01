@@ -51,8 +51,13 @@
         <article class="project-details">
             <h1>Theater Mode: Animation Viewer</h1>
 
-            <div class="project-image">
-                <img src="../images/project2.jpg" alt="Project 2">
+            <div class="project-video">
+                <video
+                    controls
+                    preload="none"
+                    poster="../images/theater_images/theater_banner_poster.png">
+                    <source src = "../webms/theater/theater_banner.mp4" type = "video/webm">
+                </video>
             </div>
 
             <div class="project-info">
@@ -72,6 +77,7 @@
                 <p><i>Brief: This mod adds a new in-game menu that lets the player replay cutscenes, view character animations, change the time of day or weather conditions, and more. This was done through creative use of the game's Lua functions.</i></p>
 
                 <p>Despite being a very story driven game, <i>Sonic Frontiers</i> has no way to replay the game's numerous cutscenes. After seeing a request for this feature on Twitter, I did some digging and found the cutscenes were simply called by passing a string to a Lua function, so I set to work on making a system that would let the player view any cutscene at will. During development, this was extended to allow several other niceties missing from the original game, like a time of day or weather toggle, as well as an animation viewer.</p>
+                <p><i>NOTE: This page focuses on the design and implementation of the cutscene and animation viewers. Weather toggling and time of day selection were handled by updating variables then calling game functions with the methods outlined below.</i></p>
                 <!-- Expandable parts! -->
                 <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
@@ -253,7 +259,7 @@
                 <div class="expandable-section">
                     <button class="expand-btn">Animation Sub Pages</button>
                     <div class="expandable-content">
-                        <p>My insistance on minimizing hardcoding created a real issue with the animation sub categories described in the previous section. Up until this point, every page had a clearly defined structure defined ahead of time in Lua and tracked using upvalues. This meant recursion was the simplest choice navigating the table as a function simply had to modify those upvalues then call itself to display a new page.
+                        <p>My insistance on minimizing hardcoding created a real issue with the animation subcategories described in the previous section. Up until this point, every page had a clearly defined structure defined ahead of time in Lua and tracked using upvalues. This meant recursion was the simplest choice for navigating the table since a function simply had to modify the upvalues then call itself to display the updated page.
                         </p>
                         <p>When the player first selects an animation, I retrieve the entry from the main Animation Table the same way I handle cutscenes, then I check its properties.</p>
                         <ol>
@@ -264,8 +270,7 @@
                         </ol>
                         <p>Directional variants were simple enough to handle as they were capped at 5 directions, but subcategories could require pages. The issue is, subcategories don't have a formal, structured table attached like regular pages. They're assembled on the fly whenever <code>AnimSubCatSelect</code> is called which meant using recursion for page navigation would completely wipe the table, and all associated data, each time.</p>
                         <p>Ultimately, I found an iterative approach to be the best solution here.
-                            <br>The function takes a reference to the specific animation entry as a parameter. When first called, it constructs tables for all possible SelectBox names and animation sequences by iterating over the reference. From there, an infinite loop begins.
-                            <br>From there, local variables declared outside of the loop track which entries get displayed as well as what to retrieve when the player finally makes a choice.
+                            <br>The function takes a reference to the specific animation entry as a parameter. When first called, it constructs tables for all possible SelectBox names and animation sequences by iterating over the reference. From there, an infinite loop begins, and local variables declared outside of the loop track which entries get displayed as well as what to retrieve when the player finally makes a choice.
                         </p>
                         <p>In a few rare instances, an option in a subcategory needs to open yet another menu to display its variations. I was unable to cleanly solve that within the loop, so for those cases I write flags in the main table which direct to a separate sub table with the original animation structure. If the loop encounters these flags, it will perform a recursive call on <code>AnimSubCatSelect</code>, effectively allowing subcategories to go infinitely deep.</p>
                         <video
