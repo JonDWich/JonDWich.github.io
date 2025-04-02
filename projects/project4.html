@@ -69,30 +69,28 @@
                 <p><i>Brief: Originally written in Lua then completely redone in C#, this mod adds a style grading system to the combat of Sonic Frontiers, rewarding varied combos while also retooling the combat system to make fights more engaging without becoming overly slow.</i></p>
                 <p>Sonic Frontiers was notably the first Sonic game in 14 years with combat that went beyond "press button to insta-kill enemy." 
                     <br>At the time of release, I had been <a href="https://gamebanana.com/mods/460778" target="_blank">developing a mod</a> for a different Sonic game that added in-combat scoring for combos, so when faced with a new title that both heavily integrated Lua and had a proper combat system, I set to work on writing a port. 
-                    <br>This would go on to become its own unique project, and it remains one of the most downloaded mods for the game, garnering nearly 18,000 downloads.
+                    This would go on to become its own unique project, and it remains one of the most downloaded mods for the game, with nearly 18,000 downloads.
                 </p>
 
                 <!-- Expandable parts! -->
                  <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
-                        <p>While plenty of combat mods were promptly released for the game, they typically focused on making fights longer by raising enemy HP, lowering player damage and speeding up player attacks. There was certainly an audience for this type of gameplay, but I found it made things too repetitive; combat turned into a slog where you rapidly mashed buttons until your opponent eventually fizzled out. It wasn't more challenging or mechanically deeper, it just took longer.</p>
-                        <p>For my mod, I took cues from character action games like <i>Devil May Cry</i>. I wanted stylish combos to be rewarded both extrinsicly with a ranking system and intrinsicly by speeding up combat. That way, each new ability would feel like a new tool in the player's repertoire (rather than a different flavor of insta-kill), and mastery of combat would preserve the game's snappy pace.</p>
-                        <p>Luckily, the game already had a mechanic for faster combat called <i>Phantom Rush</i> where attacks add to a meter which temporarily boosts damage by 20% once filled. This isn't particularly useful in the base game, of course, but it was the perfect system to pursue for this mod.
-                            <br>With an outline in mind, I set the following goals:
+                        <p>While plenty of combat mods were promptly released for the game, they often prioritized extending fight length via higher health and lower damage rather than changing how the player approached battles. For my part, I wanted longer fights, but I also wanted to highlight the oft-overlooked strengths of the system the developers had put so much time into.</p>
+
+                        <p>For my mod, I took cues from character action games like <i>Devil May Cry</i>. I wanted stylish combos to be rewarded both extrinsicly with a ranking system and intrinsicly by speeding up combat. That way, each new ability would feel like a new tool in the player's repertoire (rather than a different flavor of insta-kill), and mastery of combat would preserve the game's snappy pace.
+                            <br>To that end, these were my two general goals:
                         </p>
                         <ul>
                             <li><i>Devil May Cry</i>-esque Grading: Every attack should grant invisible score contributing to a visible rank.</li>
                             <ul>
                                 <li>Repeated attacks "stale", granting less score, while "fresh" attacks unstale other moves.</li>
                                 <li>Specific score is invisible due to technical limitations (no way to display a meter smoothly). Instead, a letter grade is given using the built in notification function.</li>
-                                <li>Score decays over time. At the end of combat, exp is awarded based on score.</li>
+                                <li>Score, and thus rank, decays over time. At the end of combat, exp is awarded based on score.</li>
                             </ul>
                             <li>Snappy combat: It's fine if mindlessly mashing buttons is ineffective, but a skilled player should be able to tear through enemies.</li>
                             <ul>
-                                <li>Accomplished by reducing the base damage of each attack but drastically increasing the Phantom Rush multiplier.</li>
-                                <li>Phantom Rush is now gained based on score, meaning varied combos fill the gauge faster.</li>
-                                <li>Phantom Rush depletes faster over tme, incentivizing constant attacks.</li>
+                                <li>Speed should be directly tied to combo performance. This provides tangible improvement to the player as they progress through the game.</li>
                                 <li>Existing attack speed or inputs should not be adjusted unless absolutely necessary. Guide the player towards learning advanced techniques like animation canceling instead of simple mashing.</li>
                             </ul>
                         </ul>
@@ -100,9 +98,58 @@
                  </div>
 
                  <div class="expandable-section">
-                    <button class="expand-btn">Technical Challenges</button>
+                    <button class="expand-btn">Lua vs. C#</button>
                     <div class="expandable-content">
-                        <p>Sandboxing, wow</p>
+                        <p>The initial release of Combat DX happened while modding for Frontiers was still in its infancy. At the time, Lua seemed like the best option as another member of the community had just published a framework for injecting new Lua-callable functions (written in C++) into the game.
+                            <br>Being very inexperienced with the this process at the time, I reached out to another community member for help, and we were able to add functions for getting/setting various combat attributes, getting the player's animation name, and detecting whether they were in combat. With that, I began researching how the game handled Lua.
+                        </p>
+                        <p>After a bit of digging, I found Frontiers has a function that spins up an entirely new instance of Lua then shifts control over to it until an <code>Exit</code> function is called. Notably, this truly is a new Lua instance. Any global variables are set to their declaration, and any changes made to them do not persist in the original instance. This was helpful as it meant I could just store my code in one script then run the function on it to guarantee a fresh state for every combat encounter.</p>
+                        <p>Unfortunately, I also discovered that the game does not implement Lua's table library. While not a major issue, it did mean my code would have to be structured around parallel arrays or lookup tables when it came to Scoring and the like.</p>
+
+                        <p>Lua was kept as the base until the game's final content update released which brought with it 3 new playable characters, each of which would require support for my mod's systems. By this point, Frontiers modding had grown to include a robust scripting system in C# which allowed for far control over the game with far less effort than code injection paired with Lua, so I finally bit the bullet and did a full rewrite.
+                            <br>This let me improve much of the code's structure while also adding new features, but generally the design of each mechanic remained the same. This will be talked about in more detail in a later section.
+                        </p>
+                    </div>
+                 </div>
+
+                 <div class="expandable-section">
+                    <button class="expand-btn">Ranking System</button>
+                    <div class="expandable-content">
+                        <p>While conceptually this step was easy enough, implementation had two roadblocks: How to detect an attack and how to grade it.
+                            <br>Even though I could check if the player was in combat, I didn't have a way to tell if they actually struck an enemy, much less the specific attack used. 
+                            My initial thought was to check the player's state and work off of that (practically every ability in Frontiers is guaranteed to hit the target), 
+                            but the game's state system didn't make that practical as several actions can share the same base state.
+                            <br>Instead, I chose to go by animation name. This had the extra benefit of letting me track how long a player stayed in a move (thus better inferring whether they attacked the enemy or canceled it early) as most abilities have _START, _LOOP and _END animations.
+                        </p>
+
+                        <p>As for the grading system, I assigned each move a table holding an array of 5 (decreasing) values along with a field for indexing the array based on how "stale" the attack is. 
+                            These tables then get stored in an array which is accessed by a lookup table pairing the player's animation to an index, effectively letting multiple types of attack share the same staling.
+                            <br>The code in Lua looked something like this:
+                        </p>
+                        <pre><code class="language-lua">
+                            AnimLookup = {
+                                PUNCH = 1,
+                                KICK = 1,
+                                CRASHER = 2,
+                                --... And so on
+                            }
+
+                            MoveTable = {
+                                [1] = {5, 4, 3, 2, 1, count = 1},
+                                [2] = {7, 5, 3, 2, 1, count = 1},
+                            }
+                        </code></pre>
+                        <p>Putting the two together, this was the general process:</p>
+                        <ol>
+                            <li>Player uses a standard Punch against an enemy.</li>
+                            <li>Get MoveTable index  (<code>my_idx = AnimLookup[player_animation]</code>).</li>
+                            <li>Increment a Score variable (<code>Score += MoveTable[my_idx][MoveTable[my_idx].count]</code>).</li>
+                            <li>Increase that move's <code>count</code> field by 1.</li>
+                            <li>Iterate through MoveTable, reducing the <code>count</code> field of all <i>other</i> moves by 1.</li>
+                        </ol>
+
+                        <p>The actual grading calculation and implementation would get enhanced and refined over the mod's lifetime, 
+                            but this loop of "Animation -> Index -> Value -> Update Staling" would remain the same.</p>
                     </div>
                  </div>
             </section>
