@@ -6,23 +6,28 @@
     <script>
         // Add this script BEFORE any other scripts, ideally in the <head> of your HTML
 // or at the very top of your existing script.js
-(function() {
-    // Check localStorage for dark mode preference
-    if (localStorage.getItem('dark-mode') === 'enabled') {
-        // Add dark mode class immediately
-        document.documentElement.classList.add('dark-mode');
-        
-        // Optional: Prevent initial flash by setting a transition delay
-        document.documentElement.style.transition = 'none';
-        
-        // Remove the no-transition style after initial load
-        window.addEventListener('load', function() {
-            document.documentElement.style.transition = '';
-        });
-    }
-})();
+    (function() {
+        // Check localStorage for dark mode preference
+        if (localStorage.getItem('dark-mode') === 'enabled') {
+            // Add dark mode class immediately
+            document.documentElement.classList.add('dark-mode');
+            
+            // Optional: Prevent initial flash by setting a transition delay
+            document.documentElement.style.transition = 'none';
+            
+            // Remove the no-transition style after initial load
+            window.addEventListener('load', function() {
+                document.documentElement.style.transition = '';
+            });
+        }
+    })();
     </script>
     <link rel="stylesheet" href="../css/style.css">
+
+    <!-- Lua highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
 </head>
 <body>
     <!-- Ribbon -->
@@ -73,7 +78,7 @@
                 </p>
 
                 <!-- Expandable parts! -->
-                 <div class="expandable-section">
+                <div class="expandable-section">
                     <button class="expand-btn">Project Goals</button>
                     <div class="expandable-content">
                         <p>While plenty of combat mods were promptly released for the game, they often prioritized extending fight length via higher health and lower damage rather than changing how the player approached battles. For my part, I wanted longer fights, but I also wanted to highlight the oft-overlooked strengths of the system the developers had put so much time into.</p>
@@ -95,9 +100,9 @@
                             </ul>
                         </ul>
                     </div>
-                 </div>
+                </div>
 
-                 <div class="expandable-section">
+                <div class="expandable-section">
                     <button class="expand-btn">Lua vs. C#</button>
                     <div class="expandable-content">
                         <p>The initial release of Combat DX happened while modding for Frontiers was still in its infancy. At the time, Lua seemed like the best option as another member of the community had just published a framework for injecting new Lua-callable functions (written in C++) into the game.
@@ -110,9 +115,9 @@
                             <br>This let me improve much of the code's structure while also adding new features, but generally the design of each mechanic remained the same. This will be talked about in more detail in a later section.
                         </p>
                     </div>
-                 </div>
+                </div>
 
-                 <div class="expandable-section">
+                <div class="expandable-section">
                     <button class="expand-btn">Ranking System</button>
                     <div class="expandable-content">
                         <p>While conceptually this step was easy enough, implementation had two roadblocks: How to detect an attack and how to grade it.
@@ -151,7 +156,34 @@
                         <p>The actual grading calculation and implementation would get enhanced and refined over the mod's lifetime, 
                             but this loop of "Animation -> Index -> Value -> Update Staling" would remain the same.</p>
                     </div>
-                 </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Keeping Combat Fast</button>
+                    <div class="expandable-content">
+                        <p>Reconciling low damage with fast combat may seem difficult, but Frontiers actually offered a solution right out of the box.
+                            <br>Phantom Rush is one of the first abilities the player unlocks, and it adds a meter which drains over time and fills when the player deals damage. 
+                            Once full, every attack deals 20% extra damage. Even though this is presented as a static boost, every move supports its own PR modifier,
+                            so I decided to center my combat around this mechanic.
+                        </p>
+                        <p>I dramatically lowered the base damage of the player's moves but provided a high multiplier for PR (with certain moves being designated as "finishers", possessing even higher damage).
+                            <br>Furthermore, I removed natural Phantom Rush gain and modified my code to fill the meter whenever the player earned score. 
+                            This way, combat would have to be varied to fill the meter and thus end fights in a timely manner, which ties directly to the idea of stylish combat.
+                        </p>
+
+                        <p>However, while testing this I found it didn't work well in the game's Titan fights. These are large scale, spectacle events at key parts in the story where Sonic transforms into Super Sonic and fights a behemoth.
+                            <br>All the normal combat rules and systems are still at play, so technically everything worked, but for such climactic moments, they didn't feel special. 
+                            Furthermore, the Titans are largely immune to combos; there's plenty of downtime in these fights which meant trying to charge Phantom Rush and maintain a good score quickly became tedious. 
+                        </p>
+
+                        <p>Eventually, I found an elegant solution to both these problems by turning Phantom Rush from a depleting damage buff into a "special move" meter.
+                            <br>Instead of draining over time, PR would now increase over time, with the rate rising at higher Style rankings. Once full, the meter would not deplete on its own. 
+                            Instead, each attack would consume a set amount of it to deal massive damage. 
+                            Getting hit would still reset the bar, so the player would have to remain careful, 
+                            but inexperienced players would now effectively have a win condition via defensive play while veterans could dramatically speed up the battle through risky, aggressive combat.
+                        </p>
+                    </div>
+                </div>
             </section>
         </article>
       </main>
