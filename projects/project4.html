@@ -189,6 +189,57 @@
                             Getting hit would still reset the bar, so the player would have to remain careful, 
                             but inexperienced players would now effectively have a win condition via defensive play while veterans could dramatically speed up the battle through risky, aggressive combat.
                         </p>
+
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/cdx_images/rush_poster.png">
+                            <source src = "../webms/cdx/super_rush.webm" type = "video/webm">
+                        </video>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Skill Links</button>
+                    <div class="expandable-content">
+                        <p>It's inevitable in action games that the player will find a series of moves which look very cool but aren't worth doing outside of showboating.
+                            I wanted some way to reward player creativity, but simply applying buffs for "cool" combos was far too loose of an idea to be practical.
+                        </p>
+                        <p>That's when I turned to the game's enemies.
+                            <br>Any good character action game has enemy behavior be a crucial part of the fight. Ideally, each encounter has both the player and their opponent taking turns to deal damage, with player skill affecting how long their turn lasts. 
+                            Since Frontiers makes it pretty easy to combo enemies indefinitely, I wanted to encourage the player to let enemies attack.
+                            <br>By combining this with the previous idea, I came up with the "Skill Link" system.
+                        </p>
+                        <ul>
+                            <li>After a successful Parry, your next three abilities are tracked.</li>
+                            <li>Once a link finishes, a temporary buff will be applied (e.g., faster meter/score gain, an immediate ring injection, preventing meter decay, etc.)</li>
+                            <ol>
+                                <li>The first move determines the type of buff.</li>
+                                <li>The second controls the potency.</li>
+                                <li>The third handles duration.</li>
+                                <li>If the buff type isn't duration based, Potency and Duration control its strength.</li>
+                            </ol>
+                            <li>Links can be extended by finishing them with a Quick Cyloop, allowing 3 more abilities to be used and enhancing the buffs available.</li>
+                            <ul>
+                                <li>This also increases the number of Quick Cyloops the player can use consecutively.</li>
+                                <li>Links start at level 1 and cap at level 3.</li>
+                                <li>Quick Cyloop was chosen as the extender since it's a quick, meter-limited ability that either launches enemies upward or downward, or disables their gimmicks.</li>
+                            </ul>
+                        </ul>
+                        <p>This allowed me to easily reward any combination of attacks while still providing some consistent rules for the player to follow.
+                            It's far from a mandatory system to enjoy regular fights, but it provides an extra layer of engagement for those who want it.
+                        </p>
+                        <p>This mechanic really shines in the Super Sonic fights, however. 
+                            While the player is invincible as Super Sonic, their rings gradually drain over time, with the fight immediately ending in defeat if the count hits 0. 
+                            Normally not an issue, this became a very real threat in Combat DX (especially after scaling starting rings by difficulty) as the encounters are prolonged.
+                        </p>
+
+                        <video
+                            controls
+                            preload="none"
+                            poster="../images/cdx_images/skill_poster.png">
+                            <source src = "../webms/cdx/skill_link.webm" type = "video/webm">
+                        </video>
                     </div>
                 </div>
             </section>
