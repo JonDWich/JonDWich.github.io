@@ -63,10 +63,23 @@ a:hover {
 .name {
     font-size: 1.5rem;
     font-weight: bold;
+    flex: 1;
+}
+
+.project-nav {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    gap: 1rem;
+}
+
+nav {
+    flex: 1;
 }
 
 nav ul {
     display: flex;
+    justify-content: flex-end;
     list-style: none;
 }
 
@@ -569,17 +582,26 @@ a:hover {
 
     /* Used for header project navigation */
     .project-nav { 
-        order: 3;
-        margin-top: 1rem;
+        order: 2;
+        margin: 0.5rem 0;
     }
 
     .name {
         margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    nav {
+        order: 3;
+        width: 100%;
+    }
+
+    nav ul {
+        justify-content: center;
     }
 
     nav li {
-        margin-left: 1rem;
-        margin-right: 1rem;
+        margin: 0 0.75rem;
     }
 
     .project-info {
