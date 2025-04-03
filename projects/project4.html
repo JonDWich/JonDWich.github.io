@@ -53,8 +53,13 @@
         <article class="project-details">
             <h1>Combat DX - Combat Extension</h1>
 
-            <div class="project-image">
-                <img src="../images/project4.jpg" alt="Project 4">
+            <div class="project-video">
+                <video
+                    controls
+                    preload="none"
+                    poster="../images/cdx_images/cdx_banner_poster.png">
+                    <source src = "../webms/cdx/cdx_banner.mp4" type = "video/mp4">
+                </video>
             </div>
 
             <div class="project-info">
@@ -111,7 +116,7 @@
                         <p>After a bit of digging, I found Frontiers has a function that spins up an entirely new instance of Lua then shifts control over to it until an <code>Exit</code> function is called. Notably, this truly is a new Lua instance. Any global variables are set to their declaration, and any changes made to them do not persist in the original instance. This was helpful as it meant I could just store my code in one script then run the function on it to guarantee a fresh state for every combat encounter.</p>
                         <p>Unfortunately, I also discovered that the game does not implement Lua's table library. While not a major issue, it did mean my code would have to be structured around parallel arrays or lookup tables when it came to Scoring and the like.</p>
 
-                        <p>Lua was kept as the base until the game's final content update released which brought with it 3 new playable characters, each of which would require support for my mod's systems. By this point, Frontiers modding had grown to include a robust scripting system in C# which allowed for far control over the game with far less effort than code injection paired with Lua, so I finally bit the bullet and did a full rewrite.
+                        <p>Lua was kept as the base until the game's final content update released which brought with it 3 new playable characters, each of which would require support for my mod's systems. By this point, Frontiers modding had grown to include a robust scripting system in C# which allowed for far more control over the game with far less effort than code injection paired with Lua, so I finally bit the bullet and did a full rewrite.
                             <br>This let me improve much of the code's structure while also adding new features, but generally the design of each mechanic remained the same. This will be talked about in more detail in a later section.
                         </p>
                     </div>
@@ -240,6 +245,32 @@
                             poster="../images/cdx_images/skill_poster.png">
                             <source src = "../webms/cdx/skill_link.webm" type = "video/webm">
                         </video>
+                    </div>
+                </div>
+
+                <div class="expandable-section">
+                    <button class="expand-btn">Rewriting Everything</button>
+                    <div class="expandable-content">
+                        <p>Sonic Frontiers' final content update brought with it 3 new playable characters, each with their own unique gameplay and attacks. 
+                            Through some datamining, I'd managed to uncover and load all three characters early in the game's penultimate update, at which point I realized I'd have to leave Lua behind.
+                        </p>
+                        <p>By this point, the game's mod manager supported "HMM Codes", scripts written in C# and leveraging libraries written by other community members.
+                            <br>This brought along with it a slew of features that never made it to the Lua Extensions project, including input detection, hot-swapping character parameters, and more. 
+                            By swapping to C#, I would be able to do far more than I could in the old Lua framework.
+                            <br>Luckily enough, these scripts even supported calling Lua functions through C#. It wasn't a flawless system - anything involving a coroutine yield call wouldn't work - but it did speed up the process a bit as I could still my DLL Lua functions.
+                        </p>
+
+                        <p>Since the mod would now have to support 4 unique gameplay styles (5, counting Super Sonic), I decided to use a more object oriented approach. 
+                            Mechanics such as score points, skill links and ranks were separated into their own classes, with a base character class grouping them all.
+                            <br>Each character then became their own class (inheriting from the base), leaving me free to adjust properties as needed.
+                        </p>
+                        <p>Any system that wouldn't need to change between character (like storing and adding score), was handled statically. 
+                            Even though the base game doesn't support swapping characters mid-combat, a patch was promptly released which enabled that behavior, so I tried my best to accommodate it.
+                        </p>
+
+                        <p>Overall, the C# rewrite was an improvement, but it wasn't without its flaws. For instance, resetting state between fights in Lua was trivial due to how scripts were instanced.
+                            With HMM Codes, however, everything is constantly active; there was no clean way to reset variables in the script, even when loading a new save file, so it took some trial and error to write effective checks.
+                        </p>
                     </div>
                 </div>
             </section>
